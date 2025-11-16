@@ -314,7 +314,7 @@ export default function AttributeAssignmentsPage() {
             <option value="">Выберите...</option>
             {scopeOptions.map((opt) => (
               <option key={opt.id} value={opt.id}>
-                {"name" in opt ? opt.name : opt.id}
+                {opt.name}
               </option>
             ))}
           </select>
