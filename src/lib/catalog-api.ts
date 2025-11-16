@@ -46,6 +46,25 @@ export interface ProductAttributeDisplay {
   options: any | null;
 }
 
+export interface CatalogCategoryNode extends Category {
+  subcategories: Subcategory[];
+}
+
+export interface FilterableAttributeDefinition {
+  id: string;
+  name: string;
+  slug: string;
+  data_type: AttributeDataType;
+  unit: string | null;
+  options: any | null;
+}
+
+export interface ProductAttributeValueRow {
+  product_id: string;
+  attribute_id: string;
+  value: any;
+}
+
 export async function getCategories(): Promise<Category[]> {
   if (!supabase) return [];
 
@@ -60,6 +79,139 @@ export async function getCategories(): Promise<Category[]> {
   }
 
   return data ?? [];
+}
+
+export async function getCatalogTree(): Promise<CatalogCategoryNode[]> {
+  if (!supabase) return [];
+
+  const [catRes, subRes] = await Promise.all([
+    supabase
+      .from("categories")
+      .select("id, name, slug, description, image_url")
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("subcategories")
+      .select("id, category_id, name, slug, description, image_url")
+      .order("sort_order", { ascending: true }),
+  ]);
+
+  if (catRes.error) {
+    console.error("Failed to load categories for tree", catRes.error);
+    return [];
+  }
+  if (subRes.error) {
+    console.error("Failed to load subcategories for tree", subRes.error);
+    return [];
+  }
+
+  const categories = (catRes.data ?? []) as Category[];
+  const subcategories = (subRes.data ?? []) as Subcategory[];
+
+  const subByCat = new Map<string, Subcategory[]>();
+  for (const sub of subcategories) {
+    const list = subByCat.get(sub.category_id) ?? [];
+    list.push(sub);
+    subByCat.set(sub.category_id, list);
+  }
+
+  return categories.map((cat) => ({
+    ...cat,
+    subcategories: subByCat.get(cat.id) ?? [],
+  }));
+}
+
+export async function getFilterableAttributesAndValues(
+  categoryId: string,
+  subcategoryId: string | null,
+  productIds: string[]
+): Promise<{
+  attributes: FilterableAttributeDefinition[];
+  values: ProductAttributeValueRow[];
+}> {
+  if (!supabase) return { attributes: [], values: [] };
+  if (productIds.length === 0) return { attributes: [], values: [] };
+
+  type ScopeType = "category" | "subcategory";
+  interface AssignmentRow {
+    id: string;
+    attribute_id: string;
+    scope_type: ScopeType;
+    scope_id: string;
+    is_required: boolean;
+    is_filterable: boolean;
+    sort_order: number;
+  }
+
+  const [catRes, subRes] = await Promise.all([
+    supabase
+      .from("attribute_assignments")
+      .select(
+        "id, attribute_id, scope_type, scope_id, is_required, is_filterable, sort_order"
+      )
+      .eq("scope_type", "category")
+      .eq("scope_id", categoryId)
+      .eq("is_filterable", true),
+    subcategoryId
+      ? supabase
+          .from("attribute_assignments")
+          .select(
+            "id, attribute_id, scope_type, scope_id, is_required, is_filterable, sort_order"
+          )
+          .eq("scope_type", "subcategory")
+          .eq("scope_id", subcategoryId)
+          .eq("is_filterable", true)
+      : Promise.resolve({ data: [], error: null } as any),
+  ]);
+
+  if (catRes.error) {
+    console.error("Failed to load category filterable attributes", catRes.error);
+    return { attributes: [], values: [] };
+  }
+  if (subRes.error) {
+    console.error("Failed to load subcategory filterable attributes", subRes.error);
+    return { attributes: [], values: [] };
+  }
+
+  const map = new Map<string, AssignmentRow>();
+  for (const a of catRes.data ?? []) {
+    const assign = a as AssignmentRow;
+    map.set(assign.attribute_id, assign);
+  }
+  for (const a of subRes.data ?? []) {
+    const assign = a as AssignmentRow;
+    map.set(assign.attribute_id, assign);
+  }
+
+  const attributeIds = Array.from(map.keys());
+  if (attributeIds.length === 0) {
+    return { attributes: [], values: [] };
+  }
+
+  const [defsRes, valuesRes] = await Promise.all([
+    supabase
+      .from("attribute_definitions")
+      .select("id, name, slug, data_type, unit, options")
+      .in("id", attributeIds),
+    supabase
+      .from("product_attribute_values")
+      .select("product_id, attribute_id, value")
+      .in("product_id", productIds)
+      .in("attribute_id", attributeIds),
+  ]);
+
+  if (defsRes.error) {
+    console.error("Failed to load filterable attribute definitions", defsRes.error);
+    return { attributes: [], values: [] };
+  }
+  if (valuesRes.error) {
+    console.error("Failed to load product attribute values", valuesRes.error);
+    return { attributes: [], values: [] };
+  }
+
+  const attributes = (defsRes.data ?? []) as FilterableAttributeDefinition[];
+  const values = (valuesRes.data ?? []) as ProductAttributeValueRow[];
+
+  return { attributes, values };
 }
 
 export async function getCategoryBySlug(slug: string) {

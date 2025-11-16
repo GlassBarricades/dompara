@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { Button } from "@/components/ui/button";
+import { slugify } from "@/lib/slugify";
 
 interface CategoryOption {
   id: string;
@@ -37,6 +38,7 @@ export default function AdminSubcategoriesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [filterCategoryId, setFilterCategoryId] = useState<string>("");
+  const [slugTouched, setSlugTouched] = useState(false);
 
   const canUseSupabase = !!supabase;
 
@@ -101,6 +103,7 @@ export default function AdminSubcategoriesPage() {
       ...emptyForm,
       category_id: prev.category_id || filterCategoryId || prev.category_id,
     }));
+    setSlugTouched(false);
   }
 
   function startEdit(row: SubcategoryRow) {
@@ -113,6 +116,7 @@ export default function AdminSubcategoriesPage() {
       sort_order: row.sort_order,
       image_url: (row as any).image_url ?? "",
     });
+    setSlugTouched(true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -326,7 +330,14 @@ export default function AdminSubcategoriesPage() {
                 type="text"
                 className="w-full rounded-md border px-3 py-2 text-sm"
                 value={form.name}
-                onChange={(e) => handleChange("name", e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setForm((prev) => ({
+                    ...prev,
+                    name: value,
+                    slug: slugTouched ? prev.slug : slugify(value),
+                  }));
+                }}
                 required
               />
             </div>
@@ -337,7 +348,10 @@ export default function AdminSubcategoriesPage() {
                 type="text"
                 className="w-full rounded-md border px-3 py-2 text-sm"
                 value={form.slug}
-                onChange={(e) => handleChange("slug", e.target.value)}
+                onChange={(e) => {
+                  setSlugTouched(true);
+                  handleChange("slug", e.target.value);
+                }}
                 required
               />
               <p className="text-xs text-muted-foreground">

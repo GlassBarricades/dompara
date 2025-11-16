@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { Button } from "@/components/ui/button";
+import { slugify } from "@/lib/slugify";
 
 type DataType = "string" | "number" | "boolean" | "select" | "multiselect";
 
@@ -33,6 +34,7 @@ export default function AdminAttributesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [optionsText, setOptionsText] = useState("");
+  const [slugTouched, setSlugTouched] = useState(false);
 
   const canUseSupabase = !!supabase;
 
@@ -68,6 +70,7 @@ export default function AdminAttributesPage() {
     setEditingId(null);
     setForm(emptyForm);
     setOptionsText("");
+    setSlugTouched(false);
   }
 
   function startEdit(row: AttributeDefinition) {
@@ -91,6 +94,7 @@ export default function AdminAttributesPage() {
     } else {
       setOptionsText("");
     }
+    setSlugTouched(true);
   }
 
   function buildOptionsFromText(): any | null {
@@ -206,7 +210,7 @@ export default function AdminAttributesPage() {
           <div className="border-b px-4 py-2 text-sm text-muted-foreground">
             Список характеристик
           </div>
-          <div className="divide-y">
+          <div className="max-h-[620px] overflow-y-auto">
             {loading ? (
               <div className="px-4 py-6 text-sm text-muted-foreground">
                 Загрузка...
@@ -216,57 +220,69 @@ export default function AdminAttributesPage() {
                 Характеристики ещё не созданы.
               </div>
             ) : (
-              items.map((row) => (
-                <div
-                  key={row.id}
-                  className="flex items-center justify-between gap-4 px-4 py-3"
-                >
-                  <div className="space-y-1">
-                    <div className="font-medium">
-                      {row.name}{" "}
-                      <span className="text-xs text-muted-foreground">
-                        ({row.data_type}
-                        {row.unit ? `, ${row.unit}` : ""})
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      slug: {row.slug}
-                    </div>
-                    {row.data_type === "select" ||
-                    row.data_type === "multiselect" ? (
-                      <div className="text-xs text-muted-foreground">
-                        Опции:{" "}
-                        {row.options && Array.isArray(row.options)
-                          ? row.options
-                              .map((opt: any) => opt.label ?? opt.value ?? "")
-                              .join(", ")
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-muted/60 text-xs uppercase text-muted-foreground">
+                  <tr>
+                    <th className="px-3 py-2">Название</th>
+                    <th className="px-3 py-2">Slug</th>
+                    <th className="px-3 py-2">Тип</th>
+                    <th className="px-3 py-2">Ед.</th>
+                    <th className="px-3 py-2">Опции</th>
+                    <th className="px-3 py-2 text-right">Действия</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((row) => (
+                    <tr key={row.id} className="border-t">
+                      <td className="px-3 py-2">
+                        <div className="font-medium">{row.name}</div>
+                        {row.description && (
+                          <div className="text-xs text-muted-foreground line-clamp-2">
+                            {row.description}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">
+                        {row.slug}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">
+                        {row.data_type}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">
+                        {row.unit ?? "—"}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">
+                        {row.data_type === "select" ||
+                        row.data_type === "multiselect"
+                          ? row.options && Array.isArray(row.options)
+                            ? row.options
+                                .map((opt: any) => opt.label ?? opt.value ?? "")
+                                .join(", ")
+                            : "—"
                           : "—"}
-                      </div>
-                    ) : null}
-                    {row.description && (
-                      <div className="text-xs text-muted-foreground line-clamp-2">
-                        {row.description}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="icon-sm"
-                      variant="outline"
-                      onClick={() => startEdit(row)}
-                    >
-                      ✎
-                    </Button>
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      onClick={() => handleDelete(row.id)}
-                    >
-                      ✕
-                    </Button>
-                  </div>
-                </div>
-              ))
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="icon-sm"
+                            variant="outline"
+                            onClick={() => startEdit(row)}
+                          >
+                            ✎
+                          </Button>
+                          <Button
+                            size="icon-sm"
+                            variant="ghost"
+                            onClick={() => handleDelete(row.id)}
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
         </div>
@@ -284,7 +300,14 @@ export default function AdminAttributesPage() {
                 type="text"
                 className="w-full rounded-md border px-3 py-2 text-sm"
                 value={form.name}
-                onChange={(e) => handleChange("name", e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setForm((prev) => ({
+                    ...prev,
+                    name: value,
+                    slug: slugTouched ? prev.slug : slugify(value),
+                  }));
+                }}
                 required
               />
             </div>
@@ -295,7 +318,10 @@ export default function AdminAttributesPage() {
                 type="text"
                 className="w-full rounded-md border px-3 py-2 text-sm"
                 value={form.slug}
-                onChange={(e) => handleChange("slug", e.target.value)}
+                onChange={(e) => {
+                  setSlugTouched(true);
+                  handleChange("slug", e.target.value);
+                }}
                 required
               />
               <p className="text-xs text-muted-foreground">

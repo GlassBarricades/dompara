@@ -110,12 +110,12 @@ const ProductPageInner = observer(({ product, attributes }: ProductPageInnerProp
         {/* Правая колонка: галерея + карточка покупки */}
         <aside className="space-y-4 rounded-lg border bg-background p-4">
           <div className="space-y-2">
-            <div className="overflow-hidden rounded-md border bg-muted flex aspect-video w-full items-center justify-center">
+            <div className="overflow-hidden rounded-md border bg-muted flex w-full items-center justify-center h-[260px] sm:h-[320px] md:h-[420px]">
               {images.length > 0 ? (
                 <img
                   src={images[activeIndex]}
                   alt={product.name}
-                  className="h-full w-full object-cover"
+                  className="max-h-[420px] w-auto object-contain"
                   loading="lazy"
                 />
               ) : (

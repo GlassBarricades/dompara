@@ -1,242 +1,125 @@
-'use client';
-
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase-client";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getContactSettings } from "@/lib/settings-api";
 
-interface ContactSettingsForm {
-  id?: string;
-  phone: string;
-  email: string;
-  telegram: string;
-  address: string;
-  showroom_hours: string;
-  company_name: string;
-  requisites: string;
-}
-
-const emptyForm: ContactSettingsForm = {
-  phone: "",
-  email: "",
-  telegram: "",
-  address: "",
-  showroom_hours: "",
-  company_name: "",
-  requisites: "",
-};
-
-export default function AdminSettingsPage() {
-  const [form, setForm] = useState<ContactSettingsForm>(emptyForm);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  const canUseSupabase = !!supabase;
-
-  useEffect(() => {
-    if (!canUseSupabase) return;
-    void loadSettings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canUseSupabase]);
-
-  async function loadSettings() {
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    const { data, error } = await supabase!
-      .from("contact_settings")
-      .select(
-        "id, phone, email, telegram, address, showroom_hours, company_name, requisites"
-      )
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      console.error(error);
-      setError("Не удалось загрузить настройки контактов");
-    } else if (data) {
-      setForm({
-        id: data.id,
-        phone: data.phone ?? "",
-        email: data.email ?? "",
-        telegram: data.telegram ?? "",
-        address: data.address ?? "",
-        showroom_hours: data.showroom_hours ?? "",
-        company_name: data.company_name ?? "",
-        requisites: data.requisites ?? "",
-      });
-    } else {
-      setForm(emptyForm);
-    }
-
-    setLoading(false);
-  }
-
-  function handleChange<K extends keyof ContactSettingsForm>(
-    key: K,
-    value: ContactSettingsForm[K]
-  ) {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!canUseSupabase) return;
-
-    setSaving(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const payload = {
-        phone: form.phone || null,
-        email: form.email || null,
-        telegram: form.telegram || null,
-        address: form.address || null,
-        showroom_hours: form.showroom_hours || null,
-        company_name: form.company_name || null,
-        requisites: form.requisites || null,
-      };
-
-      if (form.id) {
-        const { error } = await supabase!
-          .from("contact_settings")
-          .update(payload)
-          .eq("id", form.id);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase!
-          .from("contact_settings")
-          .insert(payload)
-          .select("id")
-          .single();
-        if (error) throw error;
-        setForm((prev) => ({ ...prev, id: (data as { id: string }).id }));
-      }
-
-      setSuccess("Настройки успешно сохранены");
-    } catch (err) {
-      console.error(err);
-      setError("Не удалось сохранить настройки контактов");
-    } finally {
-      setSaving(false);
-    }
-  }
+export default async function AdminSettingsPage() {
+  const settings = await getContactSettings();
 
   return (
     <section className="space-y-6">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold">Настройки контактов</h1>
-        <p className="text-sm text-muted-foreground">
-          Данные, которые отображаются на странице «Контакты» и используются при
-          коммуникации с клиентами.
-        </p>
+      <header className="flex items-center justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold">Настройки контактов</h1>
+          <p className="text-sm text-muted-foreground">
+            Данные, которые отображаются на странице «Контакты» и используются при
+            коммуникации с клиентами.
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/admin/settings/edit">Редактировать</Link>
+        </Button>
       </header>
 
-      {!canUseSupabase && (
-        <p className="text-sm text-red-600">
-          Supabase не сконфигурирован. Установи переменные окружения
-          NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY.
+      {!settings ? (
+        <p className="text-sm text-muted-foreground">
+          Настройки ещё не заданы. Нажмите «Редактировать», чтобы заполнить их.
         </p>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-[2fr,1fr]">
+          <div className="space-y-4 rounded-md border bg-background p-4 md:p-6">
+            <div className="grid gap-3 text-sm">
+              <div>
+                <div className="text-xs uppercase text-muted-foreground">Телефон</div>
+                <div className="font-medium">
+                  {settings.phone || <span className="text-muted-foreground">не задан</span>}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase text-muted-foreground">Email</div>
+                <div className="font-medium">
+                  {settings.email || <span className="text-muted-foreground">не задан</span>}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase text-muted-foreground">Telegram</div>
+                <div className="font-medium">
+                  {settings.telegram || (
+                    <span className="text-muted-foreground">не задан</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase text-muted-foreground">
+                  Режим работы шоурума
+                </div>
+                <div className="font-medium">
+                  {settings.showroom_hours || (
+                    <span className="text-muted-foreground">не задан</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase text-muted-foreground">Адрес шоурума</div>
+                <div className="text-sm">
+                  {settings.address || (
+                    <span className="text-muted-foreground">не задан</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase text-muted-foreground">
+                  Название компании
+                </div>
+                <div className="font-medium">
+                  {settings.company_name || (
+                    <span className="text-muted-foreground">не задано</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase text-muted-foreground">Реквизиты</div>
+                <div className="whitespace-pre-wrap text-sm">
+                  {settings.requisites || (
+                    <span className="text-muted-foreground">не заданы</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4 rounded-md border bg-background p-4 md:p-6 text-sm">
+            <div className="space-y-2">
+              <div className="text-xs uppercase text-muted-foreground">Логотип</div>
+              {settings.logo_url ? (
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 overflow-hidden rounded bg-muted">
+                    <img
+                      src={settings.logo_url}
+                      alt="Логотип"
+                      className="h-full w-full object-contain"
+                      loading="lazy"
+                    />
+                  </div>
+                  <a
+                    href={settings.logo_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-primary underline-offset-4 hover:underline break-all"
+                  >
+                    {settings.logo_url}
+                  </a>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Логотип не задан</p>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Эти настройки используются на странице контактов и в интерфейсе сайта.
+            </p>
+          </div>
+        </div>
       )}
-
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {success && <p className="text-sm text-emerald-600">{success}</p>}
-
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 rounded-md border bg-background p-4 md:p-6"
-      >
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Загрузка...</p>
-        ) : (
-          <>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Телефон</label>
-                <input
-                  type="text"
-                  className="w-full rounded-md border px-3 py-2 text-sm"
-                  value={form.phone}
-                  onChange={(e) => handleChange("phone", e.target.value)}
-                  placeholder="+7 (___) ___-__-__"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Email</label>
-                <input
-                  type="email"
-                  className="w-full rounded-md border px-3 py-2 text-sm"
-                  value={form.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  placeholder="info@example.com"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Telegram</label>
-                <input
-                  type="text"
-                  className="w-full rounded-md border px-3 py-2 text-sm"
-                  value={form.telegram}
-                  onChange={(e) => handleChange("telegram", e.target.value)}
-                  placeholder="@username"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Режим работы шоурума</label>
-                <input
-                  type="text"
-                  className="w-full rounded-md border px-3 py-2 text-sm"
-                  value={form.showroom_hours}
-                  onChange={(e) => handleChange("showroom_hours", e.target.value)}
-                  placeholder="ежедневно с 10:00 до 20:00"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Адрес шоурума</label>
-              <textarea
-                className="w-full rounded-md border px-3 py-2 text-sm min-h-[60px]"
-                value={form.address}
-                onChange={(e) => handleChange("address", e.target.value)}
-                placeholder="г. Ваш город, улица Примерная, дом 1, павильон «Баня»"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Название компании</label>
-              <input
-                type="text"
-                className="w-full rounded-md border px-3 py-2 text-sm"
-                value={form.company_name}
-                onChange={(e) => handleChange("company_name", e.target.value)}
-                placeholder="ИП Иванов Иван Иванович"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Реквизиты</label>
-              <textarea
-                className="w-full rounded-md border px-3 py-2 text-sm min-h-[80px]"
-                value={form.requisites}
-                onChange={(e) => handleChange("requisites", e.target.value)}
-                placeholder="ИНН / ОГРНИП, банковские реквизиты и т.п."
-              />
-            </div>
-
-            <div className="pt-2">
-              <Button type="submit" disabled={saving || !canUseSupabase}>
-                {saving ? "Сохранение..." : "Сохранить"}
-              </Button>
-            </div>
-          </>
-        )}
-      </form>
     </section>
   );
 }
-
 

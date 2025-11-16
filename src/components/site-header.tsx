@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { observer } from "mobx-react-lite";
 import { useCartStore } from "@/stores/cart-context";
 import { Button } from "@/components/ui/button";
 
-export function SiteHeader() {
+export const SiteHeader = observer(function SiteHeader() {
   const cart = useCartStore();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -95,6 +96,5 @@ export function SiteHeader() {
       )}
     </header>
   );
-}
-
+});
 
