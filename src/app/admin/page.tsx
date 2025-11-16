@@ -25,7 +25,7 @@ export default async function AdminDashboardPage() {
         <h1 className="text-2xl font-semibold">Дашборд</h1>
         <p className="text-sm text-red-600">
           Supabase не сконфигурирован. Установи переменные окружения
-          NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY.
+          NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY.git
         </p>
       </section>
     );

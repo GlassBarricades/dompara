@@ -171,7 +171,7 @@ export default function AttributeAssignmentsPage() {
     }
   }
 
-  const scopeOptions = useMemo(() => {
+  const scopeOptions: { id: string; name: string }[] = useMemo(() => {
     switch (scopeType) {
       case "category":
         return categories;
@@ -185,8 +185,7 @@ export default function AttributeAssignmentsPage() {
   }, [scopeType, categories, subcategories, products]);
 
   const currentScopeName = useMemo(() => {
-    const list = scopeOptions as { id: string; name: string }[];
-    return list.find((i) => i.id === selectedId)?.name ?? "";
+    return scopeOptions.find((i) => i.id === selectedId)?.name ?? "";
   }, [scopeOptions, selectedId]);
 
   function handleAttributeToggle(id: string, field: keyof AttributeState, value: any) {
