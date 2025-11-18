@@ -109,7 +109,7 @@ export function HeroSlider({
               const showSecondaryCatalogButton = !isPrimaryCatalogCta;
 
               return (
-                <CarouselItem key={banner.id}>
+                <CarouselItem key={banner.id} className="pl-0">
                   <div className="relative h-full">
                     {banner.image_url && (
                       <>
