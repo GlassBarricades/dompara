@@ -1,69 +1,22 @@
 import Link from "next/link";
+import { HeroSlider } from "@/components/home/hero-slider";
+import { CategorySlider } from "@/components/home/category-slider";
+import { getHomepageBanners } from "@/lib/homepage-banners-api";
+import { getCategories } from "@/lib/catalog-api";
 
-export default function Home() {
+export const revalidate = 0;
+
+export default async function Home() {
+  const banners = await getHomepageBanners();
+  const categories = await getCategories();
+
   return (
-    <div className="space-y-12">
-      {/* Hero */}
-      <section className="bg-gradient-to-b from-background to-muted/50">
-        <div className="container mx-auto flex flex-col gap-8 px-4 py-10 md:flex-row md:items-center md:justify-between md:py-16">
-          <div className="max-w-xl space-y-6">
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-              Всё для настоящей русской бани
-            </h1>
-            <p className="text-sm text-muted-foreground md:text-base">
-              Подберите печь, камни, веники и аксессуары под вашу баню. Сделайте
-              заказ без онлайн-оплаты — заявку обработает менеджер.
-            </p>
-            <div className="flex flex-wrap gap-3 text-sm">
-              <Link
-                href="/catalog"
-                className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
-              >
-                Перейти в каталог
-              </Link>
-              <Link
-                href="/delivery"
-                className="rounded-md border border-border px-4 py-2 hover:bg-accent hover:text-accent-foreground"
-              >
-                Доставка и оплата
-              </Link>
-            </div>
-          </div>
+    <div>
+      {/* Hero – слайдер баннеров из админки */}
+      <HeroSlider banners={banners} />
 
-          <div className="grid w-full max-w-sm grid-cols-2 gap-3 text-xs text-muted-foreground md:max-w-md md:text-sm">
-            <div className="rounded-lg border bg-background p-4">
-              <div className="font-medium text-foreground">Печи и дымоходы</div>
-              <p className="mt-1">
-                Для небольших парных и больших комплексов. Подберём по объёму и
-                типу топлива.
-              </p>
-            </div>
-            <div className="rounded-lg border bg-background p-4">
-              <div className="font-medium text-foreground">Камни и веники</div>
-              <p className="mt-1">
-                Правильные породы камней и свежие веники для мягкого пара и
-                отдыха.
-              </p>
-            </div>
-            <div className="rounded-lg border bg-background p-4">
-              <div className="font-medium text-foreground">
-                Аксессуары и посуда
-              </div>
-              <p className="mt-1">
-                Шапки, коврики, шайки, термометры и всё, что делает баню
-                комфортной.
-              </p>
-            </div>
-            <div className="rounded-lg border bg-background p-4">
-              <div className="font-medium text-foreground">Монтаж и помощь</div>
-              <p className="mt-1">
-                Поможем с подбором и монтажом печи, подскажем по эксплуатации и
-                уходу.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Слайдер категорий каталога */}
+      <CategorySlider categories={categories} />
 
       {/* CTA блоки */}
       <section className="container mx-auto px-4 space-y-6">

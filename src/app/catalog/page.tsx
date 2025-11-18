@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { getCategories } from "@/lib/catalog-api";
 
+// Делаем страницу каталога динамической,
+// чтобы список категорий не кэшировался на билд,
+// а подхватывал изменения из админки сразу.
+export const revalidate = 0;
+
 export default async function CatalogPage() {
   const categories = await getCategories();
 

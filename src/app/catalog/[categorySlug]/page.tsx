@@ -8,6 +8,10 @@ import {
 } from "@/lib/catalog-api";
 import { CatalogWithSidebar } from "@/components/catalog/catalog-with-sidebar";
 
+// Делаем страницу категории динамической,
+// чтобы список товаров и подкатегорий всегда был актуальным.
+export const revalidate = 0;
+
 interface CategoryPageProps {
   params: {
     categorySlug: string;

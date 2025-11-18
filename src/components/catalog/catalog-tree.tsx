@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import {
@@ -15,6 +18,19 @@ export function CatalogTree({
   activeCategorySlug,
   activeSubcategorySlug,
 }: CatalogTreeProps) {
+  const [openCategorySlug, setOpenCategorySlug] = useState<string | null>(
+    activeCategorySlug ?? null
+  );
+
+  // При смене активной категории автоматически раскрываем только её
+  useEffect(() => {
+    if (activeCategorySlug) {
+      setOpenCategorySlug(activeCategorySlug);
+    } else {
+      setOpenCategorySlug(null);
+    }
+  }, [activeCategorySlug]);
+
   return (
     <nav className="space-y-3 text-sm">
       <div className="font-semibold text-xs uppercase text-muted-foreground">
@@ -36,19 +52,45 @@ export function CatalogTree({
       <ul className="space-y-1">
         {tree.map((cat) => {
           const isActiveCategory = cat.slug === activeCategorySlug;
+          const isOpen = openCategorySlug === cat.slug;
+          const canToggle = cat.subcategories.length > 0;
+          const showSubcategories = canToggle && isOpen;
+
           return (
             <li key={cat.id}>
-              <Link
-                href={`/catalog/${cat.slug}`}
+              <div
                 className={`flex items-center justify-between rounded-md px-2 py-1 ${
                   isActiveCategory
                     ? "bg-accent text-accent-foreground"
                     : "text-foreground hover:bg-accent hover:text-accent-foreground"
                 }`}
               >
-                <span className="truncate">{cat.name}</span>
-              </Link>
-              {cat.subcategories.length > 0 && (
+                <Link
+                  href={`/catalog/${cat.slug}`}
+                  className="flex-1 truncate"
+                >
+                  {cat.name}
+                </Link>
+
+                {canToggle && (
+                  <button
+                    type="button"
+                    className="ml-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] text-muted-foreground hover:bg-background/40"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setOpenCategorySlug((prev) =>
+                        prev === cat.slug ? null : cat.slug
+                      );
+                    }}
+                    aria-label={isOpen ? "Свернуть подкатегории" : "Раскрыть подкатегории"}
+                  >
+                    {isOpen ? "−" : "+"}
+                  </button>
+                )}
+              </div>
+
+              {showSubcategories && (
                 <ul className="mt-1 space-y-0.5 border-l pl-3 text-xs text-muted-foreground">
                   {cat.subcategories.map((sub) => {
                     const isActiveSub =

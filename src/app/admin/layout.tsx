@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const adminLinks = [
+  { href: "/admin/banners", label: "Баннеры главной" },
   { href: "/admin/categories", label: "Категории" },
   { href: "/admin/subcategories", label: "Подкатегории" },
   { href: "/admin/products", label: "Товары" },
