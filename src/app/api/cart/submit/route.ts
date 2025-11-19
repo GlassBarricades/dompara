@@ -97,6 +97,14 @@ export async function POST(req: Request) {
 
         const text = lines.join("\n");
 
+        // Преобразуем chat_id в строку (Telegram API принимает и строку, и число)
+        const chatId = String(TELEGRAM_CHAT_ID).trim();
+
+        console.log("Attempting to send Telegram message...");
+        console.log("Chat ID:", chatId);
+        console.log("Bot Token present:", !!TELEGRAM_BOT_TOKEN);
+        console.log("Message length:", text.length);
+
         const telegramResponse = await fetch(
           `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
           {
@@ -105,21 +113,31 @@ export async function POST(req: Request) {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              chat_id: TELEGRAM_CHAT_ID,
+              chat_id: chatId,
               text,
             }),
           }
         );
 
+        const responseData = await telegramResponse.json().catch(() => ({}));
+
         if (!telegramResponse.ok) {
-          const errorData = await telegramResponse.json().catch(() => ({}));
-          console.error("Failed to send message to Telegram:", errorData);
+          console.error("Failed to send message to Telegram:");
+          console.error("Status:", telegramResponse.status);
+          console.error("Response:", responseData);
+        } else {
+          console.log("Telegram message sent successfully:", responseData);
         }
       } catch (telegramError) {
         // Логируем ошибку, но не прерываем выполнение
         // Заявка уже сохранена в БД, поэтому продолжаем
-        console.error("Error sending message to Telegram:", telegramError);
+        console.error("Error sending message to Telegram:");
+        console.error(telegramError);
       }
+    } else {
+      console.log("Telegram not configured:");
+      console.log("TELEGRAM_BOT_TOKEN:", !!TELEGRAM_BOT_TOKEN);
+      console.log("TELEGRAM_CHAT_ID:", !!TELEGRAM_CHAT_ID);
     }
 
     return NextResponse.json({ success: true, orderId, total });
