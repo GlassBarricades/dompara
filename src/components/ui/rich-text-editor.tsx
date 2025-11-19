@@ -43,7 +43,7 @@ export function RichTextEditor({
     // Обновляем только если значение действительно изменилось
     // и это не было изменение из самого редактора
     if (value !== currentHtml) {
-      editor.commands.setContent(value || '', false);
+      editor.commands.setContent(value || '', { emitUpdate: false });
     }
   }, [value, editor]);
 
