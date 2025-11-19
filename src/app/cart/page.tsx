@@ -92,7 +92,7 @@ function CartPageInner() {
                 <div>
                   <div className="font-medium">{item.name}</div>
                   <div className="text-sm text-muted-foreground">
-                    {item.price.toLocaleString("ru-RU")} ₽ × {item.quantity}
+                    {item.price.toLocaleString("ru-RU")} BYN × {item.quantity}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -128,7 +128,7 @@ function CartPageInner() {
               Товаров: {cart.totalCount}
             </div>
             <div className="text-lg font-semibold">
-              Итого: {cart.totalPrice.toLocaleString("ru-RU")} ₽
+              Итого: {cart.totalPrice.toLocaleString("ru-RU")} BYN
             </div>
           </div>
 

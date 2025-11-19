@@ -75,13 +75,13 @@ export async function POST(req: Request) {
       lines.push("Товары:");
       for (const item of items) {
         lines.push(
-          `• ${item.name} — ${item.price} ₽ × ${item.quantity} = ${
+          `• ${item.name} — ${item.price} BYN × ${item.quantity} = ${
             Number(item.price ?? 0) * Number(item.quantity ?? 0)
-          } ₽`
+          } BYN`
         );
       }
       lines.push("");
-      lines.push(`Итого: ${total} ₽`);
+      lines.push(`Итого: ${total} BYN`);
       lines.push("");
       lines.push("Клиент:");
       lines.push(`Имя: ${customer.name}`);

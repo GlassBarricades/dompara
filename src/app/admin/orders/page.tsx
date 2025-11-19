@@ -143,7 +143,7 @@ export default function AdminOrdersPage() {
                   {Array.isArray(order.items) &&
                     order.items.map((item: any, index: number) => (
                       <div key={index}>
-                        {item.name} — {item.price} ₽ × {item.quantity}
+                        {item.name} — {item.price} BYN × {item.quantity}
                       </div>
                     ))}
                 </div>

@@ -170,14 +170,15 @@ export function ProductGridWithFilters({ products }: ProductGridWithFiltersProps
                 </div>
                 <div className="font-medium">{product.name}</div>
                 {product.short_description && (
-                  <p className="text-sm text-muted-foreground line-clamp-3">
-                    {product.short_description}
-                  </p>
+                  <div
+                    className="text-sm text-muted-foreground line-clamp-3 prose prose-sm max-w-none prose-p:my-1 prose-headings:my-1 prose-ul:my-1 prose-ol:my-1"
+                    dangerouslySetInnerHTML={{ __html: product.short_description }}
+                  />
                 )}
               </div>
               <div className="mt-3 flex items-center justify-between text-sm font-semibold">
                 <span>
-                  {Number(product.price ?? 0).toLocaleString("ru-RU")} ₽
+                  {Number(product.price ?? 0).toLocaleString("ru-RU")} BYN
                 </span>
                 <Button
                   variant="outline"

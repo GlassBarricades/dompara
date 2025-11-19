@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase-client";
 import { Button } from "@/components/ui/button";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { slugify } from "@/lib/slugify";
 
 type DataType = "string" | "number" | "boolean" | "select" | "multiselect";
@@ -476,17 +477,15 @@ export default function NewProductPage() {
 
             <div className="space-y-1">
               <label className="text-sm font-medium">Короткое описание</label>
-              <textarea
-                className="w-full rounded-md border px-3 py-2 text-sm min-h-[80px]"
+              <RichTextEditor
                 value={form.short_description ?? ""}
-                onChange={(e) =>
-                  handleChange("short_description", e.target.value)
-                }
+                onChange={(html) => handleChange("short_description", html)}
+                placeholder="Введите описание товара..."
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium">Цена (₽)</label>
+              <label className="text-sm font-medium">Цена (BYN)</label>
               <input
                 type="number"
                 step="1"

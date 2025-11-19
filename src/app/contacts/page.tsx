@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { getContactSettings } from "@/lib/settings-api";
 
+// Делаем страницу контактов динамической,
+// чтобы данные обновлялись при каждом заходе на страницу.
+export const revalidate = 0;
+
 export default async function ContactsPage() {
   const settings = await getContactSettings();
 

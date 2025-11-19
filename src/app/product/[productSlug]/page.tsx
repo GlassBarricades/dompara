@@ -74,9 +74,10 @@ const ProductPageInner = observer(({ product, attributes }: ProductPageInnerProp
         <div className="space-y-4">
           <h1 className="text-2xl font-semibold">{product.name}</h1>
           {product.short_description && (
-            <p className="text-sm text-muted-foreground">
-              {product.short_description}
-            </p>
+            <div
+              className="text-sm text-muted-foreground prose prose-sm max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-2 prose-ol:my-2"
+              dangerouslySetInnerHTML={{ __html: product.short_description }}
+            />
           )}
 
           {attributes.length > 0 && (
@@ -156,7 +157,7 @@ const ProductPageInner = observer(({ product, attributes }: ProductPageInnerProp
                 Цена
               </div>
               <div className="text-2xl font-semibold">
-                {product.price.toLocaleString("ru-RU")} ₽
+                {product.price.toLocaleString("ru-RU")} BYN
               </div>
             </div>
 

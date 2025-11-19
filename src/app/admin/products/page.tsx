@@ -233,7 +233,7 @@ export default function AdminProductsPage() {
                     /product/{row.slug}
                   </td>
                   <td className="px-3 py-3 text-sm">
-                    {formatPrice(row.price)} ₽
+                    {formatPrice(row.price)} BYN
                   </td>
                   <td className="px-3 py-3 text-xs">
                     {row.is_active ? (

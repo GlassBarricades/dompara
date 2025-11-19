@@ -1,5 +1,9 @@
 import { supabase } from "@/lib/supabase-client";
 
+// Делаем дашборд динамическим,
+// чтобы данные обновлялись при каждом заходе на страницу.
+export const revalidate = 0;
+
 interface StatCardProps {
   label: string;
   value: string | number;

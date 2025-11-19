@@ -483,7 +483,7 @@ export function CatalogWithSidebar({
                 </div>
                 <div className="mt-3 flex items-center justify-between text-sm font-semibold">
                   <span>
-                    {Number(product.price ?? 0).toLocaleString("ru-RU")} ₽
+                    {Number(product.price ?? 0).toLocaleString("ru-RU")} BYN
                   </span>
                   <Button
                     variant="outline"
