@@ -1,14 +1,21 @@
 import Link from "next/link";
 import { HeroSlider } from "@/components/home/hero-slider";
 import { CategorySlider } from "@/components/home/category-slider";
+import { ReviewsSlider } from "@/components/home/reviews-slider";
+import { FeaturedProducts } from "@/components/home/featured-products";
 import { getHomepageBanners } from "@/lib/homepage-banners-api";
-import { getCategories } from "@/lib/catalog-api";
+import { getCategories, getFeaturedProducts } from "@/lib/catalog-api";
+import { getActiveReviews } from "@/lib/reviews-api";
 
 export const revalidate = 0;
 
 export default async function Home() {
-  const banners = await getHomepageBanners();
-  const categories = await getCategories();
+  const [banners, categories, reviews, featuredProducts] = await Promise.all([
+    getHomepageBanners(),
+    getCategories(),
+    getActiveReviews(),
+    getFeaturedProducts(),
+  ]);
 
   return (
     <div>
@@ -17,6 +24,12 @@ export default async function Home() {
 
       {/* Слайдер категорий каталога */}
       <CategorySlider categories={categories} />
+
+      {/* Популярные товары */}
+      <FeaturedProducts products={featuredProducts} />
+
+      {/* Отзывы клиентов */}
+      <ReviewsSlider reviews={reviews} />
 
       {/* CTA блоки */}
       <section className="container mx-auto px-4 space-y-6">

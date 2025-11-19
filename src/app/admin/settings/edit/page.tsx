@@ -168,7 +168,7 @@ export default function AdminSettingsEditPage() {
                   className="w-full rounded-md border px-3 py-2 text-sm"
                   value={form.phone}
                   onChange={(e) => handleChange("phone", e.target.value)}
-                  placeholder="+7 (___) ___-__-__"
+                  placeholder="+375 (___) ___-__-__"
                 />
               </div>
               <div className="space-y-1">

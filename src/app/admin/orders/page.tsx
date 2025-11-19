@@ -28,6 +28,7 @@ export default function AdminOrdersPage() {
   const [items, setItems] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const canUseSupabase = !!supabase;
@@ -75,6 +76,27 @@ export default function AdminOrdersPage() {
       setError("Не удалось обновить статус заявки");
     } finally {
       setSavingId(null);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!canUseSupabase) return;
+    if (!window.confirm("Удалить заявку? Это действие нельзя отменить.")) return;
+
+    setDeletingId(id);
+    setError(null);
+    try {
+      const { error } = await supabase!
+        .from("orders")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      await loadOrders();
+    } catch (err) {
+      console.error(err);
+      setError("Не удалось удалить заявку");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -156,26 +178,39 @@ export default function AdminOrdersPage() {
                     <Button
                       size="icon-sm"
                       variant="outline"
-                      disabled={savingId === order.id}
+                      disabled={savingId === order.id || deletingId === order.id}
                       onClick={() => updateStatus(order.id, "new")}
+                      title="Новая"
                     >
                       N
                     </Button>
                     <Button
                       size="icon-sm"
                       variant="outline"
-                      disabled={savingId === order.id}
+                      disabled={savingId === order.id || deletingId === order.id}
                       onClick={() => updateStatus(order.id, "in_progress")}
+                      title="В работе"
                     >
                       W
                     </Button>
                     <Button
                       size="icon-sm"
                       variant="outline"
-                      disabled={savingId === order.id}
+                      disabled={savingId === order.id || deletingId === order.id}
                       onClick={() => updateStatus(order.id, "done")}
+                      title="Завершена"
                     >
                       ✓
+                    </Button>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      disabled={savingId === order.id || deletingId === order.id}
+                      onClick={() => handleDelete(order.id)}
+                      title="Удалить"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                    >
+                      ✕
                     </Button>
                   </div>
                 </div>

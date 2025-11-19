@@ -72,6 +72,7 @@ const emptyForm = {
   short_description: "",
   price: "",
   is_active: true,
+  is_featured: false,
   main_image_url: "",
   gallery: "" as string | "",
 };
@@ -123,7 +124,7 @@ export default function EditProductPage() {
         supabase!
           .from("products")
           .select(
-            "id, category_id, subcategory_id, name, slug, short_description, price, is_active, main_image_url, gallery"
+            "id, category_id, subcategory_id, name, slug, short_description, price, is_active, is_featured, main_image_url, gallery"
           )
           .eq("id", id)
           .maybeSingle(),
@@ -156,6 +157,7 @@ export default function EditProductPage() {
         short_description: product.short_description ?? "",
         price: String(product.price ?? ""),
         is_active: product.is_active,
+        is_featured: (product as any).is_featured ?? false,
         main_image_url: product.main_image_url ?? "",
         gallery: Array.isArray(product.gallery)
           ? product.gallery.join("\n")
@@ -359,6 +361,7 @@ export default function EditProductPage() {
       short_description: form.short_description || null,
       price: priceNumber,
       is_active: form.is_active,
+      is_featured: form.is_featured,
       main_image_url: form.main_image_url || null,
       gallery:
         form.gallery && String(form.gallery).trim().length
@@ -601,17 +604,31 @@ export default function EditProductPage() {
               />
             </div>
 
-            <div className="flex items-center gap-2 pt-1">
-              <input
-                id="is_active"
-                type="checkbox"
-                className="h-4 w-4 rounded border"
-                checked={form.is_active}
-                onChange={(e) => handleChange("is_active", e.target.checked)}
-              />
-              <label htmlFor="is_active" className="text-sm">
-                Показывать в каталоге
-              </label>
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center gap-2">
+                <input
+                  id="is_active"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border"
+                  checked={form.is_active}
+                  onChange={(e) => handleChange("is_active", e.target.checked)}
+                />
+                <label htmlFor="is_active" className="text-sm">
+                  Показывать в каталоге
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  id="is_featured"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border"
+                  checked={form.is_featured}
+                  onChange={(e) => handleChange("is_featured", e.target.checked)}
+                />
+                <label htmlFor="is_featured" className="text-sm">
+                  Показывать в разделе "Популярные товары" на главной странице
+                </label>
+              </div>
             </div>
 
             <div className="space-y-3 border-т pt-4 mt-4">

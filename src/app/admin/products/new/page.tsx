@@ -59,6 +59,7 @@ const emptyForm = {
   short_description: "",
   price: "",
   is_active: true,
+  is_featured: false,
   main_image_url: "",
   gallery: "" as string | "",
 };
@@ -285,6 +286,7 @@ export default function NewProductPage() {
       short_description: form.short_description || null,
       price: priceNumber,
       is_active: form.is_active,
+      is_featured: form.is_featured,
       main_image_url: form.main_image_url || null,
       gallery:
         form.gallery && String(form.gallery).trim().length
@@ -497,17 +499,31 @@ export default function NewProductPage() {
               />
             </div>
 
-            <div className="flex items-center gap-2 pt-1">
-              <input
-                id="is_active"
-                type="checkbox"
-                className="h-4 w-4 rounded border"
-                checked={form.is_active}
-                onChange={(e) => handleChange("is_active", e.target.checked)}
-              />
-              <label htmlFor="is_active" className="text-sm">
-                Показывать в каталоге
-              </label>
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center gap-2">
+                <input
+                  id="is_active"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border"
+                  checked={form.is_active}
+                  onChange={(e) => handleChange("is_active", e.target.checked)}
+                />
+                <label htmlFor="is_active" className="text-sm">
+                  Показывать в каталоге
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  id="is_featured"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border"
+                  checked={form.is_featured}
+                  onChange={(e) => handleChange("is_featured", e.target.checked)}
+                />
+                <label htmlFor="is_featured" className="text-sm">
+                  Показывать в разделе "Популярные товары" на главной странице
+                </label>
+              </div>
             </div>
 
             <div className="space-y-3 border-t pt-4 mt-4">

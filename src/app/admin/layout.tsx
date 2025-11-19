@@ -12,6 +12,7 @@ const adminLinks = [
   { href: "/admin/products", label: "Товары" },
   { href: "/admin/attributes", label: "Характеристики" },
   { href: "/admin/attributes-assign", label: "Назначения характеристик" },
+  { href: "/admin/reviews", label: "Отзывы" },
   { href: "/admin/settings", label: "Настройки" },
   { href: "/admin/orders", label: "Заявки" },
 ];

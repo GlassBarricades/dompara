@@ -8,7 +8,7 @@ export const revalidate = 0;
 export default async function ContactsPage() {
   const settings = await getContactSettings();
 
-  const phone = settings?.phone ?? "+7 (___) ___-__-__";
+  const phone = settings?.phone ?? "+375 (___) ___-__-__";
   const email = settings?.email ?? "info@example.com";
   const telegram = settings?.telegram ?? "@your_username";
   const address =
@@ -37,7 +37,7 @@ export default async function ContactsPage() {
             <div className="space-y-1 text-sm text-muted-foreground">
               <div>
                 Телефон:{" "}
-                <a href="tel:+7XXXXXXXXXX" className="text-primary hover:underline">
+                <a href="tel:+375XXXXXXXXXX" className="text-primary hover:underline">
                   {phone}
                 </a>
               </div>
@@ -93,7 +93,7 @@ export default async function ContactsPage() {
                   <input
                     type="text"
                     className="w-full rounded-md border px-3 py-2 text-sm"
-                    placeholder="+7 ... или example@mail.ru"
+                    placeholder="+375 ... или example@mail.ru"
                   />
                 </div>
               </div>

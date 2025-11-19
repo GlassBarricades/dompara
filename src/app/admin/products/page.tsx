@@ -27,6 +27,7 @@ interface ProductRow {
   short_description: string | null;
   price: number | string | null;
   is_active: boolean;
+  is_featured?: boolean;
   main_image_url?: string | null;
   gallery?: string[] | null;
 }
@@ -65,7 +66,7 @@ export default function AdminProductsPage() {
         supabase!
           .from("products")
           .select(
-            "id, category_id, subcategory_id, name, slug, short_description, price, is_active, main_image_url, gallery"
+            "id, category_id, subcategory_id, name, slug, short_description, price, is_active, is_featured, main_image_url, gallery"
           )
           .order("created_at", { ascending: false }),
       ]);
@@ -176,6 +177,7 @@ export default function AdminProductsPage() {
               <th className="px-3 py-2">Slug</th>
               <th className="px-3 py-2">Цена</th>
               <th className="px-3 py-2">Статус</th>
+              <th className="px-3 py-2 min-w-[120px]">Популярный</th>
               <th className="px-3 py-2 text-right">Действия</th>
             </tr>
           </thead>
@@ -183,7 +185,7 @@ export default function AdminProductsPage() {
             {loading ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-3 py-6 text-center text-sm text-muted-foreground"
                 >
                   Загрузка...
@@ -192,7 +194,7 @@ export default function AdminProductsPage() {
             ) : filteredItems.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-3 py-6 text-center text-sm text-muted-foreground"
                 >
                   Для этой категории ещё нет товаров.
@@ -244,6 +246,16 @@ export default function AdminProductsPage() {
                       <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                         Скрыт
                       </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-3 text-xs min-w-[120px]">
+                    {row.is_featured ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-yellow-50 px-2 py-0.5 text-[11px] text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200 whitespace-nowrap">
+                        <span>★</span>
+                        <span>Популярный</span>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
                     )}
                   </td>
                   <td className="px-3 py-3 text-right">

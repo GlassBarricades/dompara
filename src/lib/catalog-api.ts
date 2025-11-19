@@ -444,4 +444,25 @@ export async function getProductAttributesForDisplay(
   return result;
 }
 
+export async function getFeaturedProducts(): Promise<Product[]> {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      "id, category_id, subcategory_id, name, slug, short_description, price, main_image_url, gallery, is_active"
+    )
+    .eq("is_active", true)
+    .eq("is_featured", true)
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  if (error) {
+    console.error("Failed to load featured products", error);
+    return [];
+  }
+
+  return (data ?? []) as Product[];
+}
+
 
