@@ -66,50 +66,60 @@ export async function POST(req: Request) {
 
     // Отправляем в Telegram (если настроено)
     if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-      const lines: string[] = [];
-      lines.push("🧺 Новая заявка из корзины");
-      if (orderId) {
-        lines.push(`ID заказа: ${orderId}`);
-      }
-      lines.push("");
-      lines.push("Товары:");
-      for (const item of items) {
-        lines.push(
-          `• ${item.name} — ${item.price} BYN × ${item.quantity} = ${
-            Number(item.price ?? 0) * Number(item.quantity ?? 0)
-          } BYN`
-        );
-      }
-      lines.push("");
-      lines.push(`Итого: ${total} BYN`);
-      lines.push("");
-      lines.push("Клиент:");
-      lines.push(`Имя: ${customer.name}`);
-      lines.push(`Телефон: ${customer.phone}`);
-      if (customer.email) lines.push(`Email: ${customer.email}`);
-      if (customer.telegram) lines.push(`Telegram: ${customer.telegram}`);
-      if (customer.comment) {
-        lines.push("");
-        lines.push("Комментарий:");
-        lines.push(customer.comment);
-      }
-
-      const text = lines.join("\n");
-
-      await fetch(
-        `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            chat_id: TELEGRAM_CHAT_ID,
-            text,
-            parse_mode: "HTML",
-          }),
+      try {
+        const lines: string[] = [];
+        lines.push("🧺 Новая заявка из корзины");
+        if (orderId) {
+          lines.push(`ID заказа: ${orderId}`);
         }
-      );
+        lines.push("");
+        lines.push("Товары:");
+        for (const item of items) {
+          lines.push(
+            `• ${item.name} — ${item.price} BYN × ${item.quantity} = ${
+              Number(item.price ?? 0) * Number(item.quantity ?? 0)
+            } BYN`
+          );
+        }
+        lines.push("");
+        lines.push(`Итого: ${total} BYN`);
+        lines.push("");
+        lines.push("Клиент:");
+        lines.push(`Имя: ${customer.name}`);
+        lines.push(`Телефон: ${customer.phone}`);
+        if (customer.email) lines.push(`Email: ${customer.email}`);
+        if (customer.telegram) lines.push(`Telegram: ${customer.telegram}`);
+        if (customer.comment) {
+          lines.push("");
+          lines.push("Комментарий:");
+          lines.push(customer.comment);
+        }
+
+        const text = lines.join("\n");
+
+        const telegramResponse = await fetch(
+          `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              chat_id: TELEGRAM_CHAT_ID,
+              text,
+            }),
+          }
+        );
+
+        if (!telegramResponse.ok) {
+          const errorData = await telegramResponse.json().catch(() => ({}));
+          console.error("Failed to send message to Telegram:", errorData);
+        }
+      } catch (telegramError) {
+        // Логируем ошибку, но не прерываем выполнение
+        // Заявка уже сохранена в БД, поэтому продолжаем
+        console.error("Error sending message to Telegram:", telegramError);
+      }
     }
 
     return NextResponse.json({ success: true, orderId, total });
