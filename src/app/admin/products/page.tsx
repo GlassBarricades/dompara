@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -28,8 +28,10 @@ interface ProductRow {
   price: number | string | null;
   is_active: boolean;
   is_featured?: boolean;
+  is_custom_order?: boolean;
   main_image_url?: string | null;
   gallery?: string[] | null;
+  stock_quantity?: number | null;
 }
 
 export default function AdminProductsPage() {
@@ -66,7 +68,7 @@ export default function AdminProductsPage() {
         supabase!
           .from("products")
           .select(
-            "id, category_id, subcategory_id, name, slug, short_description, price, is_active, is_featured, main_image_url, gallery"
+            "id, category_id, subcategory_id, name, slug, short_description, price, is_active, is_featured, is_custom_order, main_image_url, gallery, stock_quantity"
           )
           .order("created_at", { ascending: false }),
       ]);
@@ -75,13 +77,13 @@ export default function AdminProductsPage() {
       if (subRes.error) throw subRes.error;
       if (prodRes.error) throw prodRes.error;
 
-
-      setCategories((catRes.data ?? []) as CategoryOption[]);
+      const cats = (catRes.data ?? []) as CategoryOption[];
+      setCategories(cats);
       setSubcategories((subRes.data ?? []) as SubcategoryOption[]);
       setItems((prodRes.data ?? []) as ProductRow[]);
 
-      if (!filterCategoryId && (catRes.data?.length ?? 0) > 0) {
-        setFilterCategoryId((catRes.data![0] as CategoryOption).id);
+      if (!filterCategoryId && cats.length > 0) {
+        setFilterCategoryId(cats[0].id);
       }
     } catch (err) {
       console.error(err);
@@ -139,9 +141,14 @@ export default function AdminProductsPage() {
             Управление товарами каталога.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/admin/products/new">Новый товар</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href="/admin/products/stock">Управление остатками</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/admin/products/new">Новый товар</Link>
+          </Button>
+        </div>
       </header>
 
       {!canUseSupabase && (
@@ -156,17 +163,22 @@ export default function AdminProductsPage() {
       <div className="rounded-md border overflow-x-auto">
         <div className="flex items-center justify-between border-b px-4 py-2 text-sm">
           <span className="text-muted-foreground">Список товаров</span>
-          <select
-            className="rounded-md border bg-background px-2 py-1 text-xs"
-            value={filterCategoryId}
-            onChange={(e) => setFilterCategoryId(e.target.value)}
-          >
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
+          {categories.length > 0 ? (
+            <select
+              className="rounded-md border bg-background px-2 py-1 text-xs"
+              value={filterCategoryId}
+              onChange={(e) => setFilterCategoryId(e.target.value)}
+              suppressHydrationWarning
+            >
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="h-7 w-24" />
+          )}
         </div>
 
         <table className="min-w-full text-left text-sm">
@@ -176,8 +188,10 @@ export default function AdminProductsPage() {
               <th className="px-3 py-2">Категория</th>
               <th className="px-3 py-2">Slug</th>
               <th className="px-3 py-2">Цена</th>
+              <th className="px-3 py-2">Остаток</th>
               <th className="px-3 py-2">Статус</th>
               <th className="px-3 py-2 min-w-[120px]">Популярный</th>
+              <th className="px-3 py-2 min-w-[120px]">Под заказ</th>
               <th className="px-3 py-2 text-right">Действия</th>
             </tr>
           </thead>
@@ -185,7 +199,7 @@ export default function AdminProductsPage() {
             {loading ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={9}
                   className="px-3 py-6 text-center text-sm text-muted-foreground"
                 >
                   Загрузка...
@@ -194,7 +208,7 @@ export default function AdminProductsPage() {
             ) : filteredItems.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={9}
                   className="px-3 py-6 text-center text-sm text-muted-foreground"
                 >
                   Для этой категории ещё нет товаров.
@@ -237,6 +251,29 @@ export default function AdminProductsPage() {
                   <td className="px-3 py-3 text-sm">
                     {formatPrice(row.price)} BYN
                   </td>
+                  <td className="px-3 py-3 text-sm">
+                    {row.is_custom_order ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      <span
+                        className={
+                          row.stock_quantity === null ||
+                          row.stock_quantity === undefined
+                            ? "text-muted-foreground"
+                            : row.stock_quantity === 0
+                            ? "text-red-600 font-medium"
+                            : row.stock_quantity < 10
+                            ? "text-orange-600 font-medium"
+                            : "text-emerald-600"
+                        }
+                      >
+                        {row.stock_quantity === null ||
+                        row.stock_quantity === undefined
+                          ? "—"
+                          : row.stock_quantity}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-3 py-3 text-xs">
                     {row.is_active ? (
                       <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700">
@@ -253,6 +290,15 @@ export default function AdminProductsPage() {
                       <span className="inline-flex items-center gap-1 rounded-full bg-yellow-50 px-2 py-0.5 text-[11px] text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200 whitespace-nowrap">
                         <span>★</span>
                         <span>Популярный</span>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-3 text-xs">
+                    {row.is_custom_order ? (
+                      <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                        Под заказ
                       </span>
                     ) : (
                       <span className="text-muted-foreground">—</span>

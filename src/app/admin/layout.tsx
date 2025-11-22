@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -6,15 +6,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const adminLinks = [
+  { href: "/admin/cashier", label: "💼 Рабочее место менеджера" },
+  { href: "/admin/orders", label: "Заявки" },
+  { href: "/admin/products", label: "Товары" },
+  { href: "/admin/products/stock", label: "Остатки товаров" },
+  { href: "/admin/products/inventory", label: "Инвентаризация" },
+  { href: "/admin/products/invoices", label: "Накладные" },
+  { href: "/admin/products/stock-logs", label: "Логи остатков" },
   { href: "/admin/banners", label: "Баннеры главной" },
   { href: "/admin/categories", label: "Категории" },
   { href: "/admin/subcategories", label: "Подкатегории" },
-  { href: "/admin/products", label: "Товары" },
   { href: "/admin/attributes", label: "Характеристики" },
   { href: "/admin/attributes-assign", label: "Назначения характеристик" },
   { href: "/admin/reviews", label: "Отзывы" },
   { href: "/admin/settings", label: "Настройки" },
-  { href: "/admin/orders", label: "Заявки" },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

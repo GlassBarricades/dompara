@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
@@ -12,15 +12,25 @@ export interface CatalogProductItem {
   short_description: string | null;
   price: number | string | null;
   main_image_url?: string | null;
+  stock_quantity?: number | null;
+  is_custom_order?: boolean;
+  is_featured?: boolean;
 }
 
-type SortKey = "default" | "price_asc" | "price_desc" | "name_asc" | "name_desc";
+type SortKey =
+  | "default"
+  | "price_asc"
+  | "price_desc"
+  | "name_asc"
+  | "name_desc";
 
 interface ProductGridWithFiltersProps {
   products: CatalogProductItem[];
 }
 
-export function ProductGridWithFilters({ products }: ProductGridWithFiltersProps) {
+export function ProductGridWithFilters({
+  products,
+}: ProductGridWithFiltersProps) {
   const [search, setSearch] = useState("");
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
@@ -116,7 +126,9 @@ export function ProductGridWithFilters({ products }: ProductGridWithFiltersProps
         <div className="flex items-end justify-between gap-3 md:w-auto md:flex-col md:items-end">
           <div className="text-xs text-muted-foreground">
             Найдено:{" "}
-            <span className="font-semibold text-foreground">{processed.length}</span>
+            <span className="font-semibold text-foreground">
+              {processed.length}
+            </span>
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-muted-foreground">
@@ -139,8 +151,8 @@ export function ProductGridWithFilters({ products }: ProductGridWithFiltersProps
 
       {processed.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          По текущим фильтрам ничего не найдено. Попробуйте сбросить поиск или изменить
-          диапазон цен.
+          По текущим фильтрам ничего не найдено. Попробуйте сбросить поиск или
+          изменить диапазон цен.
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -148,9 +160,23 @@ export function ProductGridWithFilters({ products }: ProductGridWithFiltersProps
             <Link
               key={product.id}
               href={`/product/${product.slug}`}
-              className="flex flex-col rounded-lg border bg-background p-4 transition-colors hover:bg-accent"
+              className="relative flex flex-col rounded-lg border bg-background p-4 transition-colors hover:bg-accent"
             >
-              <div className="mb-3 flex h-32 items-center justify-center overflow-hidden rounded-md border bg-muted">
+              {/* Бейджи */}
+              <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
+                {product.is_featured && (
+                  <span className="inline-flex items-center rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white dark:bg-amber-600 dark:text-white">
+                    ⭐ Популярный
+                  </span>
+                )}
+                {product.is_custom_order && (
+                  <span className="inline-flex items-center rounded-full bg-purple-500 px-2 py-0.5 text-xs font-medium text-white dark:bg-purple-600 dark:text-white">
+                    📦 Под заказ
+                  </span>
+                )}
+              </div>
+
+              <div className="mb-3 flex h-56 items-center justify-center overflow-hidden rounded-md border bg-muted">
                 {product.main_image_url ? (
                   <img
                     src={product.main_image_url}
@@ -169,24 +195,39 @@ export function ProductGridWithFilters({ products }: ProductGridWithFiltersProps
                   Товар
                 </div>
                 <div className="font-medium">{product.name}</div>
-                {product.short_description && (
-                  <div
-                    className="text-sm text-muted-foreground line-clamp-3 prose prose-sm max-w-none prose-p:my-1 prose-headings:my-1 prose-ul:my-1 prose-ol:my-1"
-                    dangerouslySetInnerHTML={{ __html: product.short_description }}
-                  />
-                )}
               </div>
-              <div className="mt-3 flex items-center justify-between text-sm font-semibold">
-                <span>
-                  {Number(product.price ?? 0).toLocaleString("ru-RU")} BYN
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-primary text-xs text-primary"
-                >
-                  Подробнее
-                </Button>
+              <div className="mt-3 space-y-2">
+                {/* Остатки */}
+                {!product.is_custom_order &&
+                  product.stock_quantity !== null &&
+                  product.stock_quantity !== undefined && (
+                    <div className="text-xs text-muted-foreground">
+                      Остаток:{" "}
+                      <span
+                        className={`font-medium ${
+                          product.stock_quantity === 0
+                            ? "text-red-600"
+                            : product.stock_quantity < 10
+                            ? "text-orange-600"
+                            : "text-emerald-600"
+                        }`}
+                      >
+                        {product.stock_quantity} шт.
+                      </span>
+                    </div>
+                  )}
+                <div className="flex items-center justify-between text-sm font-semibold">
+                  <span>
+                    {Number(product.price ?? 0).toLocaleString("ru-RU")} BYN
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-primary text-xs text-primary"
+                  >
+                    Подробнее
+                  </Button>
+                </div>
               </div>
             </Link>
           ))}
@@ -195,5 +236,3 @@ export function ProductGridWithFilters({ products }: ProductGridWithFiltersProps
     </section>
   );
 }
-
-

@@ -20,10 +20,7 @@ export async function POST(req: Request) {
     };
 
     if (!items.length) {
-      return NextResponse.json(
-        { error: "Корзина пуста" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Корзина пуста" }, { status: 400 });
     }
 
     if (!customer?.name || !customer?.phone) {
@@ -61,6 +58,21 @@ export async function POST(req: Request) {
         console.error("Failed to create order in Supabase", error);
       } else {
         orderId = (data as { id: string }).id;
+
+        // Логируем создание заявки
+        if (supabase) {
+          await supabase.from("order_logs").insert({
+            order_id: orderId,
+            field_name: null,
+            old_value: null,
+            new_value: JSON.stringify({
+              customer_name: customer.name,
+              phone: customer.phone,
+              items,
+            }),
+            comment: "Создана новая заявка",
+          });
+        }
       }
     }
 
@@ -149,5 +161,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
-

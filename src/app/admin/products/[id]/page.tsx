@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -71,8 +71,10 @@ const emptyForm = {
   slug: "",
   short_description: "",
   price: "",
+  stock_quantity: "",
   is_active: true,
   is_featured: false,
+  is_custom_order: false,
   main_image_url: "",
   gallery: "" as string | "",
 };
@@ -124,7 +126,7 @@ export default function EditProductPage() {
         supabase!
           .from("products")
           .select(
-            "id, category_id, subcategory_id, name, slug, short_description, price, is_active, is_featured, main_image_url, gallery"
+            "id, category_id, subcategory_id, name, slug, short_description, price, is_active, is_featured, is_custom_order, main_image_url, gallery, stock_quantity"
           )
           .eq("id", id)
           .maybeSingle(),
@@ -156,8 +158,14 @@ export default function EditProductPage() {
         slug: product.slug,
         short_description: product.short_description ?? "",
         price: String(product.price ?? ""),
+        stock_quantity:
+          product.stock_quantity !== null &&
+          product.stock_quantity !== undefined
+            ? String(product.stock_quantity)
+            : "",
         is_active: product.is_active,
         is_featured: (product as any).is_featured ?? false,
+        is_custom_order: (product as any).is_custom_order ?? false,
         main_image_url: product.main_image_url ?? "",
         gallery: Array.isArray(product.gallery)
           ? product.gallery.join("\n")
@@ -186,12 +194,27 @@ export default function EditProductPage() {
   // при смене категории/подкатегории на форме перезагружаем характеристики,
   // чтобы всегда было объединение: категория + подкатегория + товар
   useEffect(() => {
-    if (!canUseSupabase || !id || !form.category_id || allAttributes.length === 0) {
+    if (
+      !canUseSupabase ||
+      !id ||
+      !form.category_id ||
+      allAttributes.length === 0
+    ) {
       return;
     }
-    void loadProductAttributes(id, form.category_id, form.subcategory_id || null);
+    void loadProductAttributes(
+      id,
+      form.category_id,
+      form.subcategory_id || null
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.category_id, form.subcategory_id, allAttributes.length, canUseSupabase, id]);
+  }, [
+    form.category_id,
+    form.subcategory_id,
+    allAttributes.length,
+    canUseSupabase,
+    id,
+  ]);
 
   async function loadProductAttributes(
     productId: string,
@@ -237,15 +260,24 @@ export default function EditProductPage() {
       if (prodRes.error) throw prodRes.error;
       if (valuesRes.error) throw valuesRes.error;
 
-      const map = new Map<string, { assignment: AssignmentRow; source: ScopeType }>();
+      const map = new Map<
+        string,
+        { assignment: AssignmentRow; source: ScopeType }
+      >();
 
       for (const a of catRes.data ?? []) {
         const assign = a as AssignmentRow;
-        map.set(assign.attribute_id, { assignment: assign, source: "category" });
+        map.set(assign.attribute_id, {
+          assignment: assign,
+          source: "category",
+        });
       }
       for (const a of subRes.data ?? []) {
         const assign = a as AssignmentRow;
-        map.set(assign.attribute_id, { assignment: assign, source: "subcategory" });
+        map.set(assign.attribute_id, {
+          assignment: assign,
+          source: "subcategory",
+        });
       }
       for (const a of prodRes.data ?? []) {
         const assign = a as AssignmentRow;
@@ -283,18 +315,24 @@ export default function EditProductPage() {
     }
   }
 
-  function handleChange<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
+  function handleChange<K extends keyof typeof form>(
+    key: K,
+    value: (typeof form)[K]
+  ) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
   function convertRawValueToUi(dataType: DataType, raw: any) {
-    if (raw === null || raw === undefined) return dataType === "multiselect" ? [] : "";
+    if (raw === null || raw === undefined)
+      return dataType === "multiselect" ? [] : "";
     switch (dataType) {
       case "string":
       case "select":
         return String(raw ?? "");
       case "number":
-        return typeof raw === "number" ? String(raw) : String(Number(raw) || "");
+        return typeof raw === "number"
+          ? String(raw)
+          : String(Number(raw) || "");
       case "boolean":
         return Boolean(raw);
       case "multiselect":
@@ -351,6 +389,20 @@ export default function EditProductPage() {
       form.subcategory_id &&
       subcategories.find((s) => s.id === form.subcategory_id);
 
+    const stockQuantityNumber = form.is_custom_order
+      ? null
+      : form.stock_quantity && String(form.stock_quantity).trim()
+      ? Number(form.stock_quantity)
+      : null;
+
+    if (
+      stockQuantityNumber !== null &&
+      (Number.isNaN(stockQuantityNumber) || stockQuantityNumber < 0)
+    ) {
+      setError("Остаток должен быть неотрицательным числом");
+      return;
+    }
+
     const payload = {
       category_id: form.category_id,
       subcategory_id: subcat ? subcat.id : null,
@@ -360,8 +412,10 @@ export default function EditProductPage() {
       slug: form.slug,
       short_description: form.short_description || null,
       price: priceNumber,
+      stock_quantity: stockQuantityNumber,
       is_active: form.is_active,
       is_featured: form.is_featured,
+      is_custom_order: form.is_custom_order,
       main_image_url: form.main_image_url || null,
       gallery:
         form.gallery && String(form.gallery).trim().length
@@ -401,7 +455,12 @@ export default function EditProductPage() {
               value: jsonValue,
             };
           })
-          .filter((r): r is { product_id: string; attribute_id: string; value: any } => !!r);
+          .filter(
+            (
+              r
+            ): r is { product_id: string; attribute_id: string; value: any } =>
+              !!r
+          );
 
         const { error: delError } = await supabase!
           .from("product_attribute_values")
@@ -434,10 +493,7 @@ export default function EditProductPage() {
     setError(null);
 
     try {
-      const { error } = await supabase!
-        .from("products")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase!.from("products").delete().eq("id", id);
       if (error) throw error;
       router.push("/admin/products");
     } catch (err) {
@@ -453,8 +509,8 @@ export default function EditProductPage() {
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Редактирование товара</h1>
           <p className="text-sm text-muted-foreground">
-            Измени параметры товара и характеристики. При необходимости можно скрыть его
-            из каталога.
+            Измени параметры товара и характеристики. При необходимости можно
+            скрыть его из каталога.
           </p>
         </div>
         <Button
@@ -556,7 +612,9 @@ export default function EditProductPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium">URL основного изображения</label>
+              <label className="text-sm font-medium">
+                URL основного изображения
+              </label>
               <input
                 type="url"
                 className="w-full rounded-md border px-3 py-2 text-sm"
@@ -565,8 +623,8 @@ export default function EditProductPage() {
                 placeholder="https://..."
               />
               <p className="text-xs text-muted-foreground">
-                Используется в карточке товара и списках. Можно указать ссылку из
-                Supabase Storage.
+                Используется в карточке товара и списках. Можно указать ссылку
+                из Supabase Storage.
               </p>
             </div>
 
@@ -591,17 +649,40 @@ export default function EditProductPage() {
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Цена (BYN)</label>
-              <input
-                type="number"
-                step="1"
-                min="0"
-                className="w-full rounded-md border px-3 py-2 text-sm"
-                value={form.price}
-                onChange={(e) => handleChange("price", e.target.value)}
-                required
-              />
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Цена (BYN)</label>
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                  value={form.price}
+                  onChange={(e) => handleChange("price", e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Остаток (шт.)</label>
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  className="w-full rounded-md border px-3 py-2 text-sm disabled:bg-muted disabled:cursor-not-allowed"
+                  value={form.stock_quantity}
+                  onChange={(e) =>
+                    handleChange("stock_quantity", e.target.value)
+                  }
+                  placeholder="Не указан"
+                  disabled={form.is_custom_order}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {form.is_custom_order
+                    ? "Для товаров под заказ остаток не отслеживается"
+                    : "Оставьте пустым, если остаток не отслеживается"}
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2 pt-1">
@@ -623,10 +704,29 @@ export default function EditProductPage() {
                   type="checkbox"
                   className="h-4 w-4 rounded border"
                   checked={form.is_featured}
-                  onChange={(e) => handleChange("is_featured", e.target.checked)}
+                  onChange={(e) =>
+                    handleChange("is_featured", e.target.checked)
+                  }
                 />
                 <label htmlFor="is_featured" className="text-sm">
                   Показывать в разделе "Популярные товары" на главной странице
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  id="is_custom_order"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border"
+                  checked={form.is_custom_order}
+                  onChange={(e) => {
+                    handleChange("is_custom_order", e.target.checked);
+                    if (e.target.checked) {
+                      handleChange("stock_quantity", "");
+                    }
+                  }}
+                />
+                <label htmlFor="is_custom_order" className="text-sm">
+                  Товар изготавливается под заказ (остатки не отслеживаются)
                 </label>
               </div>
             </div>
@@ -642,8 +742,8 @@ export default function EditProductPage() {
               </div>
               {productAttributes.length === 0 && !attrsLoading && (
                 <p className="text-xs text-muted-foreground">
-                  Для товара пока нет характеристик или они не назначены. Настрой их в
-                  разделе «Назначения характеристик».
+                  Для товара пока нет характеристик или они не назначены.
+                  Настрой их в разделе «Назначения характеристик».
                 </p>
               )}
               {productAttributes.length > 0 && (
@@ -779,5 +879,3 @@ function renderAttributeInput(
       return null;
   }
 }
-
-

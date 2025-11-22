@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -18,9 +18,17 @@ export interface CatalogProductItem {
   short_description: string | null;
   price: number | string | null;
   main_image_url?: string | null;
+  stock_quantity?: number | null;
+  is_custom_order?: boolean;
+  is_featured?: boolean;
 }
 
-type SortKey = "default" | "price_asc" | "price_desc" | "name_asc" | "name_desc";
+type SortKey =
+  | "default"
+  | "price_asc"
+  | "price_desc"
+  | "name_asc"
+  | "name_desc";
 
 type AttrFilterState =
   | { type: "select" | "multiselect" | "string"; value: string[] }
@@ -61,10 +69,7 @@ export function CatalogWithSidebar({
     const max = maxPrice ? Number(maxPrice) : undefined;
 
     // подготовим карту значений атрибутов по товарам
-    const valuesByProduct = new Map<
-      string,
-      Map<string, any>
-    >();
+    const valuesByProduct = new Map<string, Map<string, any>>();
 
     attributeValues.forEach((row) => {
       let byAttr = valuesByProduct.get(row.product_id);
@@ -78,13 +83,16 @@ export function CatalogWithSidebar({
     const activeAttrFilters = Object.entries(selectedAttrs).filter(
       ([, v]) =>
         v &&
-        ((v.type === "multiselect" && Array.isArray(v.value) && v.value.length) ||
+        ((v.type === "multiselect" &&
+          Array.isArray(v.value) &&
+          v.value.length) ||
           (v.type === "select" && Array.isArray(v.value) && v.value.length) ||
           (v.type === "string" && Array.isArray(v.value) && v.value.length) ||
           (v.type === "boolean" && v.value !== "all") ||
           (v.type === "number" &&
             v.value &&
-            (typeof v.value.min === "number" || typeof v.value.max === "number")))
+            (typeof v.value.min === "number" ||
+              typeof v.value.max === "number")))
     );
 
     let list = products.filter((p) => {
@@ -161,7 +169,15 @@ export function CatalogWithSidebar({
     }
 
     return list;
-  }, [products, search, minPrice, maxPrice, sort]);
+  }, [
+    products,
+    search,
+    minPrice,
+    maxPrice,
+    sort,
+    selectedAttrs,
+    attributeValues,
+  ]);
 
   function renderAttributeFilters() {
     if (!filterAttributes || filterAttributes.length === 0) return null;
@@ -208,7 +224,9 @@ export function CatalogWithSidebar({
                               onChange={(e) => {
                                 setSelectedAttrs((prev) => {
                                   const next = { ...prev };
-                                  const prevEntry = next[key] as AttrFilterState | undefined;
+                                  const prevEntry = next[key] as
+                                    | AttrFilterState
+                                    | undefined;
                                   let values: string[] =
                                     prevEntry && Array.isArray(prevEntry.value)
                                       ? [...(prevEntry.value as string[])]
@@ -219,15 +237,15 @@ export function CatalogWithSidebar({
                                         values.push(value);
                                       }
                                     } else {
-                                      values = values.filter((v) => v !== value);
+                                      values = values.filter(
+                                        (v) => v !== value
+                                      );
                                     }
                                   } else {
                                     values = e.target.checked ? [value] : [];
                                   }
                                   next[key] = {
-                                    type: multiple
-                                      ? "multiselect"
-                                      : "select",
+                                    type: multiple ? "multiselect" : "select",
                                     value: values,
                                   };
                                   return next;
@@ -245,9 +263,7 @@ export function CatalogWithSidebar({
 
             if (attr.data_type === "boolean") {
               const val: "all" | "true" | "false" =
-                current && current.type === "boolean"
-                  ? current.value
-                  : "all";
+                current && current.type === "boolean" ? current.value : "all";
               return (
                 <div key={attr.id} className="space-y-1">
                   <div className="text-xs font-medium text-foreground">
@@ -276,7 +292,9 @@ export function CatalogWithSidebar({
               const allValues = Array.from(
                 new Set(
                   attributeValues
-                    .filter((v) => v.attribute_id === attr.id && v.value != null)
+                    .filter(
+                      (v) => v.attribute_id === attr.id && v.value != null
+                    )
                     .map((v) => String(v.value))
                 )
               );
@@ -305,7 +323,9 @@ export function CatalogWithSidebar({
                             onChange={(e) => {
                               setSelectedAttrs((prev) => {
                                 const next = { ...prev };
-                                const prevEntry = next[key] as AttrFilterState | undefined;
+                                const prevEntry = next[key] as
+                                  | AttrFilterState
+                                  | undefined;
                                 let values: string[] =
                                   prevEntry && Array.isArray(prevEntry.value)
                                     ? [...(prevEntry.value as string[])]
@@ -445,8 +465,8 @@ export function CatalogWithSidebar({
 
         {processed.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            По текущим фильтрам ничего не найдено. Попробуйте изменить запрос или
-            диапазон цен.
+            По текущим фильтрам ничего не найдено. Попробуйте изменить запрос
+            или диапазон цен.
           </p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -454,9 +474,23 @@ export function CatalogWithSidebar({
               <Link
                 key={product.id}
                 href={`/product/${product.slug}`}
-                className="flex flex-col rounded-lg border bg-background p-4 transition-colors hover:bg-accent"
+                className="relative flex flex-col rounded-lg border bg-background p-4 transition-colors hover:bg-accent"
               >
-                <div className="mb-3 flex h-32 items-center justify-center overflow-hidden rounded-md border bg-muted">
+                {/* Бейджи */}
+                <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
+                  {product.is_featured && (
+                    <span className="inline-flex items-center rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white dark:bg-amber-600 dark:text-white">
+                      ⭐ Популярный
+                    </span>
+                  )}
+                  {product.is_custom_order && (
+                    <span className="inline-flex items-center rounded-full bg-purple-500 px-2 py-0.5 text-xs font-medium text-white dark:bg-purple-600 dark:text-white">
+                      📦 Под заказ
+                    </span>
+                  )}
+                </div>
+
+                <div className="mb-3 flex h-56 items-center justify-center overflow-hidden rounded-md border bg-muted">
                   {product.main_image_url ? (
                     <img
                       src={product.main_image_url}
@@ -475,23 +509,39 @@ export function CatalogWithSidebar({
                     Товар
                   </div>
                   <div className="font-medium">{product.name}</div>
-                  {product.short_description && (
-                    <p className="text-sm text-muted-foreground line-clamp-3">
-                      {product.short_description}
-                    </p>
-                  )}
                 </div>
-                <div className="mt-3 flex items-center justify-between text-sm font-semibold">
-                  <span>
-                    {Number(product.price ?? 0).toLocaleString("ru-RU")} BYN
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-primary text-xs text-primary"
-                  >
-                    Подробнее
-                  </Button>
+                <div className="mt-3 space-y-2">
+                  {/* Остатки */}
+                  {!product.is_custom_order &&
+                    product.stock_quantity !== null &&
+                    product.stock_quantity !== undefined && (
+                      <div className="text-xs text-muted-foreground">
+                        Остаток:{" "}
+                        <span
+                          className={`font-medium ${
+                            product.stock_quantity === 0
+                              ? "text-red-600"
+                              : product.stock_quantity < 10
+                              ? "text-orange-600"
+                              : "text-emerald-600"
+                          }`}
+                        >
+                          {product.stock_quantity} шт.
+                        </span>
+                      </div>
+                    )}
+                  <div className="flex items-center justify-between text-sm font-semibold">
+                    <span>
+                      {Number(product.price ?? 0).toLocaleString("ru-RU")} BYN
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-primary text-xs text-primary"
+                    >
+                      Подробнее
+                    </Button>
+                  </div>
                 </div>
               </Link>
             ))}
@@ -501,5 +551,3 @@ export function CatalogWithSidebar({
     </div>
   );
 }
-
-

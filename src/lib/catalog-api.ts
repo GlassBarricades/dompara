@@ -27,6 +27,9 @@ export interface Product {
   price: number;
   main_image_url: string | null;
   gallery: string[] | null;
+  stock_quantity?: number | null;
+  is_custom_order?: boolean;
+  is_featured?: boolean;
 }
 
 export type AttributeDataType =
@@ -164,11 +167,17 @@ export async function getFilterableAttributesAndValues(
   ]);
 
   if (catRes.error) {
-    console.error("Failed to load category filterable attributes", catRes.error);
+    console.error(
+      "Failed to load category filterable attributes",
+      catRes.error
+    );
     return { attributes: [], values: [] };
   }
   if (subRes.error) {
-    console.error("Failed to load subcategory filterable attributes", subRes.error);
+    console.error(
+      "Failed to load subcategory filterable attributes",
+      subRes.error
+    );
     return { attributes: [], values: [] };
   }
 
@@ -200,7 +209,10 @@ export async function getFilterableAttributesAndValues(
   ]);
 
   if (defsRes.error) {
-    console.error("Failed to load filterable attribute definitions", defsRes.error);
+    console.error(
+      "Failed to load filterable attribute definitions",
+      defsRes.error
+    );
     return { attributes: [], values: [] };
   }
   if (valuesRes.error) {
@@ -254,7 +266,7 @@ export async function getProductsByCategorySlug(slug: string) {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, category_id, subcategory_id, name, slug, short_description, price, main_image_url, gallery, is_active"
+      "id, category_id, subcategory_id, name, slug, short_description, price, main_image_url, gallery, is_active, stock_quantity, is_custom_order, is_featured"
     )
     .eq("is_active", true)
     .eq("category_slug", slug);
@@ -264,7 +276,10 @@ export async function getProductsByCategorySlug(slug: string) {
     return [];
   }
 
-  return (data ?? []) as (Product & { is_active: boolean })[];
+  return (data ?? []) as (Product & {
+    is_active: boolean;
+    is_featured?: boolean;
+  })[];
 }
 
 export async function getProductsBySubcategorySlug(slug: string) {
@@ -273,7 +288,7 @@ export async function getProductsBySubcategorySlug(slug: string) {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, category_id, subcategory_id, name, slug, short_description, price, main_image_url, gallery, is_active"
+      "id, category_id, subcategory_id, name, slug, short_description, price, main_image_url, gallery, is_active, stock_quantity, is_custom_order, is_featured"
     )
     .eq("is_active", true)
     .eq("subcategory_slug", slug);
@@ -283,7 +298,10 @@ export async function getProductsBySubcategorySlug(slug: string) {
     return [];
   }
 
-  return (data ?? []) as (Product & { is_active: boolean })[];
+  return (data ?? []) as (Product & {
+    is_active: boolean;
+    is_featured?: boolean;
+  })[];
 }
 
 export async function getProductBySlug(slug: string) {
@@ -292,7 +310,7 @@ export async function getProductBySlug(slug: string) {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, category_id, subcategory_id, name, slug, short_description, price, main_image_url, gallery, is_active"
+      "id, category_id, subcategory_id, name, slug, short_description, price, main_image_url, gallery, is_active, stock_quantity, is_custom_order, is_featured"
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -306,7 +324,10 @@ export async function getProductBySlug(slug: string) {
     return null;
   }
 
-  const { is_active, ...rest } = data as Product & { is_active: boolean };
+  const { is_active, ...rest } = data as Product & {
+    is_active: boolean;
+    is_featured?: boolean;
+  };
   return rest;
 }
 
@@ -383,7 +404,10 @@ export async function getProductAttributesForDisplay(
     sort_order: number;
   }
 
-  const map = new Map<string, { assignment: AssignmentRow; source: ScopeType }>();
+  const map = new Map<
+    string,
+    { assignment: AssignmentRow; source: ScopeType }
+  >();
 
   for (const a of catRes.data ?? []) {
     const assign = a as AssignmentRow;
@@ -434,10 +458,8 @@ export async function getProductAttributesForDisplay(
   });
 
   result.sort((a, b) => {
-    const aOrder =
-      (map.get(a.id)?.assignment.sort_order ?? 0);
-    const bOrder =
-      (map.get(b.id)?.assignment.sort_order ?? 0);
+    const aOrder = map.get(a.id)?.assignment.sort_order ?? 0;
+    const bOrder = map.get(b.id)?.assignment.sort_order ?? 0;
     return aOrder - bOrder;
   });
 
@@ -450,7 +472,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, category_id, subcategory_id, name, slug, short_description, price, main_image_url, gallery, is_active"
+      "id, category_id, subcategory_id, name, slug, short_description, price, main_image_url, gallery, is_active, stock_quantity, is_custom_order, is_featured"
     )
     .eq("is_active", true)
     .eq("is_featured", true)
@@ -464,5 +486,3 @@ export async function getFeaturedProducts(): Promise<Product[]> {
 
   return (data ?? []) as Product[];
 }
-
-

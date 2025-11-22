@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -32,7 +32,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
   // Определяем, сколько карточек помещается на экране (только на клиенте)
   useEffect(() => {
     setMounted(true);
-    
+
     function updateSlidesPerView() {
       if (typeof window === "undefined") return;
       const width = window.innerWidth;
@@ -81,11 +81,11 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
 
   const totalPages = Math.max(
     1,
-    Math.ceil(safeProducts.length / Math.max(1, slidesPerView)),
+    Math.ceil(safeProducts.length / Math.max(1, slidesPerView))
   );
   const currentPage = Math.min(
     totalPages,
-    Math.floor(current / Math.max(1, slidesPerView)) + 1,
+    Math.floor(current / Math.max(1, slidesPerView)) + 1
   );
 
   return (
@@ -137,9 +137,16 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
                     </div>
                   </div>
                   <div className="p-4 space-y-2">
-                    <h3 className="font-medium line-clamp-2 group-hover:text-primary transition-colors">
-                      {product.name}
-                    </h3>
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-medium line-clamp-2 group-hover:text-primary transition-colors flex-1">
+                        {product.name}
+                      </h3>
+                      {product.is_custom_order && (
+                        <span className="inline-flex items-center rounded-full bg-purple-500 px-2 py-0.5 text-[10px] font-medium text-white dark:bg-purple-600 dark:text-white whitespace-nowrap flex-shrink-0">
+                          📦 Под заказ
+                        </span>
+                      )}
+                    </div>
                     {product.short_description && (
                       <p className="text-xs text-muted-foreground line-clamp-2">
                         <span
@@ -149,9 +156,30 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
                         />
                       </p>
                     )}
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="text-lg font-semibold">
-                        {product.price.toLocaleString("ru-RU")} BYN
+                    <div className="space-y-1 pt-2">
+                      {/* Остатки */}
+                      {!product.is_custom_order &&
+                        product.stock_quantity !== null &&
+                        product.stock_quantity !== undefined && (
+                          <div className="text-xs text-muted-foreground">
+                            Остаток:{" "}
+                            <span
+                              className={`font-medium ${
+                                product.stock_quantity === 0
+                                  ? "text-red-600"
+                                  : product.stock_quantity < 10
+                                  ? "text-orange-600"
+                                  : "text-emerald-600"
+                              }`}
+                            >
+                              {product.stock_quantity} шт.
+                            </span>
+                          </div>
+                        )}
+                      <div className="flex items-center justify-between">
+                        <div className="text-lg font-semibold">
+                          {product.price.toLocaleString("ru-RU")} BYN
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -171,7 +199,10 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
         </CarouselContent>
 
         {mounted && safeProducts.length > slidesPerView && (
-          <div className="mt-6 flex items-center justify-between" suppressHydrationWarning>
+          <div
+            className="mt-6 flex items-center justify-between"
+            suppressHydrationWarning
+          >
             <div className="flex items-center gap-2">
               <CarouselPrevious className="h-8 w-8 border bg-background" />
               <div className="flex gap-1">
@@ -213,4 +244,3 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
 }
 
 export default observer(FeaturedProducts);
-

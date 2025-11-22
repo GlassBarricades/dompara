@@ -38,7 +38,9 @@ export default async function AdminDashboardPage() {
   const [catCountRes, subCountRes, prodCountRes, activeProdRes, ordersRes] =
     await Promise.all([
       supabase.from("categories").select("*", { count: "exact", head: true }),
-      supabase.from("subcategories").select("*", { count: "exact", head: true }),
+      supabase
+        .from("subcategories")
+        .select("*", { count: "exact", head: true }),
       supabase.from("products").select("*", { count: "exact", head: true }),
       supabase
         .from("products")
@@ -131,5 +133,3 @@ export default async function AdminDashboardPage() {
     </section>
   );
 }
-
-
