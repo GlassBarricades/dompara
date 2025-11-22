@@ -32,6 +32,9 @@ interface ProductRow {
   short_description: string | null;
   price: number | null;
   is_active: boolean;
+  is_featured?: boolean;
+  is_custom_order?: boolean;
+  stock_quantity?: number | null;
   main_image_url?: string | null;
   gallery?: string[] | null;
 }
@@ -164,8 +167,8 @@ export default function EditProductPage() {
             ? String(product.stock_quantity)
             : "",
         is_active: product.is_active,
-        is_featured: (product as any).is_featured ?? false,
-        is_custom_order: (product as any).is_custom_order ?? false,
+        is_featured: product.is_featured ?? false,
+        is_custom_order: product.is_custom_order ?? false,
         main_image_url: product.main_image_url ?? "",
         gallery: Array.isArray(product.gallery)
           ? product.gallery.join("\n")
