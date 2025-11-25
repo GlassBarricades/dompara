@@ -339,7 +339,7 @@ export async function getProductAttributesForDisplay(
   if (!supabase) return [];
 
   // получаем назначения характеристик для категории, подкатегории и товара
-  const [catRes, subRes, prodRes, defsRes, valuesRes] = await Promise.all([
+  const [catRes, subRes, prodRes, valuesRes] = await Promise.all([
     supabase
       .from("attribute_assignments")
       .select(
@@ -364,9 +364,6 @@ export async function getProductAttributesForDisplay(
       .eq("scope_type", "product")
       .eq("scope_id", productId),
     supabase
-      .from("attribute_definitions")
-      .select("id, name, slug, data_type, unit, options"),
-    supabase
       .from("product_attribute_values")
       .select("attribute_id, value")
       .eq("product_id", productId),
@@ -382,10 +379,6 @@ export async function getProductAttributesForDisplay(
   }
   if (prodRes.error) {
     console.error(prodRes.error);
-    return [];
-  }
-  if (defsRes.error) {
-    console.error(defsRes.error);
     return [];
   }
   if (valuesRes.error) {
@@ -420,6 +413,23 @@ export async function getProductAttributesForDisplay(
   for (const a of prodRes.data ?? []) {
     const assign = a as AssignmentRow;
     map.set(assign.attribute_id, { assignment: assign, source: "product" });
+  }
+
+  // Собираем только нужные ID атрибутов
+  const attributeIds = Array.from(map.keys());
+  if (attributeIds.length === 0) {
+    return [];
+  }
+
+  // Загружаем только нужные определения атрибутов
+  const defsRes = await supabase
+    .from("attribute_definitions")
+    .select("id, name, slug, data_type, unit, options")
+    .in("id", attributeIds);
+
+  if (defsRes.error) {
+    console.error(defsRes.error);
+    return [];
   }
 
   const defs = (defsRes.data ?? []) as {

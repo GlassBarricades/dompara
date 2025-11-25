@@ -11,7 +11,19 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase =
   supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey)
+    ? createClient(supabaseUrl, supabaseAnonKey, {
+        db: {
+          schema: "public",
+        },
+        global: {
+          fetch: (url, options = {}) => {
+            return fetch(url, {
+              ...options,
+              next: { revalidate: 0 }, // Отключаем кэширование для актуальных данных
+            });
+          },
+        },
+      })
     : null;
 
 
