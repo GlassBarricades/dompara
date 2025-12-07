@@ -221,12 +221,12 @@ export function CatalogWithSidebar({
               setSelectedAttrs((prev) => {
                 const next = { ...prev };
                 const current = next[attrId] as AttrFilterState | undefined;
-                if (current && Array.isArray(current.value)) {
+                if (current && (current.type === "select" || current.type === "multiselect" || current.type === "string")) {
                   const newValues = current.value.filter((v) => v !== val);
                   if (newValues.length === 0) {
                     delete next[attrId];
                   } else {
-                    next[attrId] = { ...current, value: newValues };
+                    next[attrId] = { ...current, value: newValues } as AttrFilterState;
                   }
                 }
                 return next;
