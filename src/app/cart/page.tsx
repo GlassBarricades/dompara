@@ -5,6 +5,8 @@ import { observer } from "mobx-react-lite";
 import { useCartStore } from "@/stores/cart-context";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = 'force-dynamic';
+
 function CartPageInner() {
   const cart = useCartStore();
   const hasItems = cart.itemsList.length > 0;

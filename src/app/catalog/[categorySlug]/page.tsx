@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import {
   getCategoryBySlug,
@@ -57,47 +58,49 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           { label: category.name },
         ]}
       />
-      <CatalogWithSidebar
-        header={
-          <header className="space-y-3">
-            <h1 className="text-2xl font-semibold">{category.name}</h1>
-            {category.description && (
-              <p className="text-sm text-muted-foreground">
-                {category.description}
-              </p>
-            )}
+      <Suspense fallback={<div className="text-muted-foreground">Загрузка...</div>}>
+        <CatalogWithSidebar
+          header={
+            <header className="space-y-3">
+              <h1 className="text-2xl font-semibold">{category.name}</h1>
+              {category.description && (
+                <p className="text-sm text-muted-foreground">
+                  {category.description}
+                </p>
+              )}
 
-            {subcategories.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                <span className="font-medium text-muted-foreground">
-                  Подкатегории:
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {subcategories.map((sub, index) => (
-                    <Link
-                      key={sub.id}
-                      href={`/catalog/${category.slug}/${sub.slug}`}
-                      className="rounded-full border px-3 py-1 transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:scale-105 animate-in fade-in slide-in-from-bottom-4"
-                      style={{
-                        animationDelay: `${index * 50}ms`,
-                        animationFillMode: "both",
-                      }}
-                    >
-                      {sub.name}
-                    </Link>
-                  ))}
+              {subcategories.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                  <span className="font-medium text-muted-foreground">
+                    Подкатегории:
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {subcategories.map((sub, index) => (
+                      <Link
+                        key={sub.id}
+                        href={`/catalog/${category.slug}/${sub.slug}`}
+                        className="rounded-full border px-3 py-1 transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:scale-105 animate-in fade-in slide-in-from-bottom-4"
+                        style={{
+                          animationDelay: `${index * 50}ms`,
+                          animationFillMode: "both",
+                        }}
+                      >
+                        {sub.name}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </header>
-        }
-        tree={tree}
-        products={products}
-        filterAttributes={filterAttributes}
-        attributeValues={attributeValues}
-        activeCategorySlug={category.slug}
-        verticalCardLayout={category.vertical_card_layout || false}
-      />
+              )}
+            </header>
+          }
+          tree={tree}
+          products={products}
+          filterAttributes={filterAttributes}
+          attributeValues={attributeValues}
+          activeCategorySlug={category.slug}
+          verticalCardLayout={category.vertical_card_layout || false}
+        />
+      </Suspense>
 
       {subcategories.length === 0 && products.length === 0 && (
         <p className="text-muted-foreground">

@@ -5,6 +5,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+
 const adminLinks = [
   { href: "/admin/cashier", label: "💼 Рабочее место менеджера" },
   { href: "/admin/orders", label: "Заявки" },

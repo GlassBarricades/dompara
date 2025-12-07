@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import {
   getCategoryBySlug,
@@ -59,20 +60,22 @@ export default async function SubcategoryPage({
           { label: subcategoryName },
         ]}
       />
-      <CatalogWithSidebar
-        header={
-          <header className="space-y-1">
-            <h1 className="text-2xl font-semibold">{subcategoryName}</h1>
-          </header>
-        }
-        tree={tree}
-        products={products}
-        filterAttributes={filterAttributes}
-        attributeValues={attributeValues}
-        activeCategorySlug={category.slug}
-        activeSubcategorySlug={subcategorySlug}
-        verticalCardLayout={subcategory?.vertical_card_layout || false}
-      />
+      <Suspense fallback={<div className="text-muted-foreground">Загрузка...</div>}>
+        <CatalogWithSidebar
+          header={
+            <header className="space-y-1">
+              <h1 className="text-2xl font-semibold">{subcategoryName}</h1>
+            </header>
+          }
+          tree={tree}
+          products={products}
+          filterAttributes={filterAttributes}
+          attributeValues={attributeValues}
+          activeCategorySlug={category.slug}
+          activeSubcategorySlug={subcategorySlug}
+          verticalCardLayout={subcategory?.vertical_card_layout || false}
+        />
+      </Suspense>
 
       {products.length === 0 && (
         <p className="text-muted-foreground">
