@@ -7,6 +7,7 @@ import {
   getFilterableAttributesAndValues,
 } from "@/lib/catalog-api";
 import { CatalogWithSidebar } from "@/components/catalog/catalog-with-sidebar";
+import { Breadcrumbs } from "@/components/catalog/breadcrumbs";
 
 // Делаем страницу категории динамической,
 // чтобы список товаров и подкатегорий всегда был актуальным.
@@ -49,15 +50,16 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   return (
     <main className="container mx-auto px-4 py-8 space-y-6">
+      <Breadcrumbs
+        items={[
+          { label: "Главная", href: "/" },
+          { label: "Каталог", href: "/catalog" },
+          { label: category.name },
+        ]}
+      />
       <CatalogWithSidebar
         header={
           <header className="space-y-3">
-            <div className="text-sm text-muted-foreground">
-              <Link href="/catalog" className="hover:underline">
-                Каталог
-              </Link>{" "}
-              / <span>{category.name}</span>
-            </div>
             <h1 className="text-2xl font-semibold">{category.name}</h1>
             {category.description && (
               <p className="text-sm text-muted-foreground">
@@ -71,11 +73,15 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                   Подкатегории:
                 </span>
                 <div className="flex flex-wrap gap-2">
-                  {subcategories.map((sub) => (
+                  {subcategories.map((sub, index) => (
                     <Link
                       key={sub.id}
                       href={`/catalog/${category.slug}/${sub.slug}`}
-                      className="rounded-full border px-3 py-1 hover:bg-accent hover:text-accent-foreground"
+                      className="rounded-full border px-3 py-1 transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:scale-105 animate-in fade-in slide-in-from-bottom-4"
+                      style={{
+                        animationDelay: `${index * 50}ms`,
+                        animationFillMode: "both",
+                      }}
                     >
                       {sub.name}
                     </Link>
@@ -90,6 +96,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         filterAttributes={filterAttributes}
         attributeValues={attributeValues}
         activeCategorySlug={category.slug}
+        verticalCardLayout={category.vertical_card_layout || false}
       />
 
       {subcategories.length === 0 && products.length === 0 && (

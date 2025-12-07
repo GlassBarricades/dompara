@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase-client";
 import { Button } from "@/components/ui/button";
@@ -35,15 +36,30 @@ interface ProductRow {
 }
 
 export default function AdminProductsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [subcategories, setSubcategories] = useState<SubcategoryOption[]>([]);
   const [items, setItems] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [filterCategoryId, setFilterCategoryId] = useState<string>("");
+  
+  // Читаем фильтр из URL параметров
+  const filterCategoryIdFromUrl = searchParams.get("category") || "";
+  const [filterCategoryId, setFilterCategoryId] = useState<string>(filterCategoryIdFromUrl);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const canUseSupabase = !!supabase;
+
+  // Синхронизируем состояние с URL параметрами при изменении URL
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get("category") || "";
+    if (categoryFromUrl !== filterCategoryId) {
+      setFilterCategoryId(categoryFromUrl);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!canUseSupabase) return;
@@ -82,8 +98,18 @@ export default function AdminProductsPage() {
       setSubcategories((subRes.data ?? []) as SubcategoryOption[]);
       setItems((prodRes.data ?? []) as ProductRow[]);
 
-      if (!filterCategoryId && cats.length > 0) {
-        setFilterCategoryId(cats[0].id);
+      // Если фильтр не установлен в URL и есть категории, устанавливаем первую
+      const currentFilter = searchParams.get("category") || "";
+      if (!currentFilter && cats.length > 0 && !isInitialized) {
+        const firstCategoryId = cats[0].id;
+        setFilterCategoryId(firstCategoryId);
+        setIsInitialized(true);
+        // Обновляем URL без перезагрузки страницы
+        const params = new URLSearchParams();
+        params.set("category", firstCategoryId);
+        router.replace(`/admin/products?${params.toString()}`, { scroll: false });
+      } else if (currentFilter || cats.length === 0) {
+        setIsInitialized(true);
       }
     } catch (err) {
       console.error(err);
@@ -146,7 +172,7 @@ export default function AdminProductsPage() {
             <Link href="/admin/products/stock">Управление остатками</Link>
           </Button>
           <Button asChild>
-            <Link href="/admin/products/new">Новый товар</Link>
+            <Link href={`/admin/products/new${filterCategoryId ? `?category=${encodeURIComponent(filterCategoryId)}` : ""}`}>Новый товар</Link>
           </Button>
         </div>
       </header>
@@ -167,7 +193,18 @@ export default function AdminProductsPage() {
             <select
               className="rounded-md border bg-background px-2 py-1 text-xs"
               value={filterCategoryId}
-              onChange={(e) => setFilterCategoryId(e.target.value)}
+              onChange={(e) => {
+                const newCategoryId = e.target.value;
+                setFilterCategoryId(newCategoryId);
+                // Обновляем URL с новым фильтром
+                const params = new URLSearchParams(searchParams.toString());
+                if (newCategoryId) {
+                  params.set("category", newCategoryId);
+                } else {
+                  params.delete("category");
+                }
+                router.replace(`/admin/products?${params.toString()}`, { scroll: false });
+              }}
               suppressHydrationWarning
             >
               {categories.map((cat) => (
@@ -307,7 +344,7 @@ export default function AdminProductsPage() {
                   <td className="px-3 py-3 text-right">
                     <div className="flex justify-end gap-2">
                       <Button asChild size="icon-sm" variant="outline">
-                        <Link href={`/admin/products/${row.id}`}>✎</Link>
+                        <Link href={`/admin/products/${row.id}?category=${encodeURIComponent(filterCategoryId)}`}>✎</Link>
                       </Button>
                       <Button
                         size="icon-sm"

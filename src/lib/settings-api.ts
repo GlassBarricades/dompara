@@ -10,6 +10,9 @@ export interface ContactSettings {
   company_name: string | null;
   requisites: string | null;
   logo_url: string | null;
+  map_latitude: number | null;
+  map_longitude: number | null;
+  map_zoom: number | null;
 }
 
 export async function getContactSettings(): Promise<ContactSettings | null> {
@@ -18,7 +21,7 @@ export async function getContactSettings(): Promise<ContactSettings | null> {
   const { data, error } = await supabase
     .from("contact_settings")
     .select(
-      "id, phone, email, telegram, address, showroom_hours, company_name, requisites, logo_url"
+      "id, phone, email, telegram, address, showroom_hours, company_name, requisites, logo_url, map_latitude, map_longitude, map_zoom"
     )
     .limit(1)
     .maybeSingle();

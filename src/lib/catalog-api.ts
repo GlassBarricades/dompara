@@ -6,6 +6,7 @@ export interface Category {
   slug: string;
   description: string | null;
   image_url: string | null;
+  vertical_card_layout?: boolean;
 }
 
 export interface Subcategory {
@@ -15,6 +16,7 @@ export interface Subcategory {
   slug: string;
   description: string | null;
   image_url: string | null;
+  vertical_card_layout?: boolean;
 }
 
 export interface Product {
@@ -73,7 +75,7 @@ export async function getCategories(): Promise<Category[]> {
 
   const { data, error } = await supabase
     .from("categories")
-    .select("id, name, slug, description, image_url")
+    .select("id, name, slug, description, image_url, vertical_card_layout")
     .order("sort_order", { ascending: true });
 
   if (error) {
@@ -90,11 +92,11 @@ export async function getCatalogTree(): Promise<CatalogCategoryNode[]> {
   const [catRes, subRes] = await Promise.all([
     supabase
       .from("categories")
-      .select("id, name, slug, description, image_url")
+      .select("id, name, slug, description, image_url, vertical_card_layout")
       .order("sort_order", { ascending: true }),
     supabase
       .from("subcategories")
-      .select("id, category_id, name, slug, description, image_url")
+      .select("id, category_id, name, slug, description, image_url, vertical_card_layout")
       .order("sort_order", { ascending: true }),
   ]);
 
@@ -231,7 +233,7 @@ export async function getCategoryBySlug(slug: string) {
 
   const { data, error } = await supabase
     .from("categories")
-    .select("id, name, slug, description, image_url")
+    .select("id, name, slug, description, image_url, vertical_card_layout")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -248,7 +250,7 @@ export async function getSubcategoriesByCategory(categoryId: string) {
 
   const { data, error } = await supabase
     .from("subcategories")
-    .select("id, category_id, name, slug, description, image_url")
+    .select("id, category_id, name, slug, description, image_url, vertical_card_layout")
     .eq("category_id", categoryId)
     .order("sort_order", { ascending: true });
 
@@ -258,6 +260,23 @@ export async function getSubcategoriesByCategory(categoryId: string) {
   }
 
   return data as Subcategory[];
+}
+
+export async function getSubcategoryBySlug(slug: string) {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from("subcategories")
+    .select("id, category_id, name, slug, description, image_url, vertical_card_layout")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to load subcategory", error);
+    return null;
+  }
+
+  return data as Subcategory | null;
 }
 
 export async function getProductsByCategorySlug(slug: string) {
@@ -329,6 +348,31 @@ export async function getProductBySlug(slug: string) {
     is_featured?: boolean;
   };
   return rest;
+}
+
+export async function getSimilarProducts(
+  productId: string,
+  categoryId: string,
+  limit: number = 4
+): Promise<Product[]> {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      "id, category_id, subcategory_id, name, slug, short_description, price, main_image_url, gallery, is_active, stock_quantity, is_custom_order, is_featured"
+    )
+    .eq("is_active", true)
+    .eq("category_id", categoryId)
+    .neq("id", productId)
+    .limit(limit);
+
+  if (error) {
+    console.error("Failed to load similar products", error);
+    return [];
+  }
+
+  return (data ?? []) as Product[];
 }
 
 export async function getProductAttributesForDisplay(
@@ -474,6 +518,33 @@ export async function getProductAttributesForDisplay(
   });
 
   return result;
+}
+
+export async function searchProducts(query: string, limit: number = 10): Promise<Product[]> {
+  if (!supabase || !query.trim()) return [];
+
+  try {
+    const searchTerm = `%${query.trim()}%`;
+    // Используем ilike с правильным синтаксисом для Supabase
+    const { data, error } = await supabase
+      .from("products")
+      .select(
+        "id, category_id, subcategory_id, name, slug, short_description, price, main_image_url, gallery, is_active, stock_quantity, is_custom_order, is_featured"
+      )
+      .eq("is_active", true)
+      .or(`name.ilike.${searchTerm},slug.ilike.${searchTerm},short_description.ilike.${searchTerm}`)
+      .limit(limit);
+
+    if (error) {
+      console.error("Failed to search products", error);
+      return [];
+    }
+
+    return (data ?? []) as Product[];
+  } catch (error) {
+    console.error("Failed to search products", error);
+    return [];
+  }
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {

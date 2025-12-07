@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase-client";
 import { Button } from "@/components/ui/button";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -68,6 +68,10 @@ const emptyForm = {
 
 export default function NewProductPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Получаем фильтр категории из URL для передачи обратно
+  const categoryFilter = searchParams.get("category") || "";
 
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [subcategories, setSubcategories] = useState<SubcategoryOption[]>([]);
@@ -384,7 +388,11 @@ export default function NewProductPage() {
         }
       }
 
-      router.push("/admin/products");
+      // Сохраняем фильтр категории при редиректе
+      const redirectUrl = categoryFilter 
+        ? `/admin/products?category=${encodeURIComponent(categoryFilter)}`
+        : "/admin/products";
+      router.push(redirectUrl);
     } catch (err) {
       console.error(err);
       setError("Не удалось сохранить товар");
@@ -677,7 +685,12 @@ export default function NewProductPage() {
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => router.push("/admin/products")}
+                onClick={() => {
+                  const redirectUrl = categoryFilter 
+                    ? `/admin/products?category=${encodeURIComponent(categoryFilter)}`
+                    : "/admin/products";
+                  router.push(redirectUrl);
+                }}
                 disabled={saving}
               >
                 Отмена

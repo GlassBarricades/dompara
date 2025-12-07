@@ -1,11 +1,13 @@
 import Link from "next/link";
 import {
   getCategoryBySlug,
+  getSubcategoryBySlug,
   getProductsBySubcategorySlug,
   getCatalogTree,
   getFilterableAttributesAndValues,
 } from "@/lib/catalog-api";
 import { CatalogWithSidebar } from "@/components/catalog/catalog-with-sidebar";
+import { Breadcrumbs } from "@/components/catalog/breadcrumbs";
 
 // Делаем страницу подкатегории динамической,
 // чтобы список товаров всегда был свежим.
@@ -24,7 +26,8 @@ export default async function SubcategoryPage({
   const { categorySlug, subcategorySlug } = params;
 
   const category = await getCategoryBySlug(categorySlug);
-  const [products, tree] = await Promise.all([
+  const [subcategory, products, tree] = await Promise.all([
+    getSubcategoryBySlug(subcategorySlug),
     getProductsBySubcategorySlug(subcategorySlug),
     getCatalogTree(),
   ]);
@@ -37,7 +40,7 @@ export default async function SubcategoryPage({
     );
   }
 
-  const subcategoryName = decodeURIComponent(subcategorySlug);
+  const subcategoryName = subcategory?.name || decodeURIComponent(subcategorySlug);
 
   const { attributes: filterAttributes, values: attributeValues } =
     await getFilterableAttributesAndValues(
@@ -48,22 +51,17 @@ export default async function SubcategoryPage({
 
   return (
     <main className="container mx-auto px-4 py-8 space-y-6">
+      <Breadcrumbs
+        items={[
+          { label: "Главная", href: "/" },
+          { label: "Каталог", href: "/catalog" },
+          { label: category.name, href: `/catalog/${category.slug}` },
+          { label: subcategoryName },
+        ]}
+      />
       <CatalogWithSidebar
         header={
           <header className="space-y-1">
-            <div className="text-sm text-muted-foreground">
-              <Link href="/catalog" className="hover:underline">
-                Каталог
-              </Link>{" "}
-              /{" "}
-              <Link
-                href={`/catalog/${category.slug}`}
-                className="hover:underline"
-              >
-                {category.name}
-              </Link>{" "}
-              / <span>{subcategoryName}</span>
-            </div>
             <h1 className="text-2xl font-semibold">{subcategoryName}</h1>
           </header>
         }
@@ -73,6 +71,7 @@ export default async function SubcategoryPage({
         attributeValues={attributeValues}
         activeCategorySlug={category.slug}
         activeSubcategorySlug={subcategorySlug}
+        verticalCardLayout={subcategory?.vertical_card_layout || false}
       />
 
       {products.length === 0 && (

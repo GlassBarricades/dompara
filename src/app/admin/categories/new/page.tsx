@@ -12,6 +12,7 @@ interface CategoryFormState {
   description: string;
   sort_order: number;
   image_url: string;
+  vertical_card_layout: boolean;
 }
 
 const emptyForm: CategoryFormState = {
@@ -20,6 +21,7 @@ const emptyForm: CategoryFormState = {
   description: "",
   sort_order: 0,
   image_url: "",
+  vertical_card_layout: false,
 };
 
 export default function NewCategoryPage() {
@@ -52,6 +54,7 @@ export default function NewCategoryPage() {
         description: form.description || null,
         sort_order: form.sort_order,
         image_url: form.image_url || null,
+        vertical_card_layout: form.vertical_card_layout,
       });
       if (error) throw error;
       router.push("/admin/categories");
@@ -151,6 +154,24 @@ export default function NewCategoryPage() {
               handleChange("sort_order", Number(e.target.value) || 0)
             }
           />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              id="vertical_card_layout"
+              type="checkbox"
+              className="h-4 w-4 rounded border"
+              checked={form.vertical_card_layout}
+              onChange={(e) => handleChange("vertical_card_layout", e.target.checked)}
+            />
+            <label htmlFor="vertical_card_layout" className="text-sm">
+              Вертикальное отображение карточек (более высокие изображения)
+            </label>
+          </div>
+          <p className="text-xs text-muted-foreground pl-6">
+            При включении этой опции карточки товаров в каталоге будут отображаться с более высокими изображениями
+          </p>
         </div>
 
         <div className="flex gap-2 pt-2">

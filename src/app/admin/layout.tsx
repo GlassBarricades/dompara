@@ -14,11 +14,14 @@ const adminLinks = [
   { href: "/admin/products/invoices", label: "Накладные" },
   { href: "/admin/products/stock-logs", label: "Логи остатков" },
   { href: "/admin/banners", label: "Баннеры главной" },
+  { href: "/admin/features", label: "Преимущества" },
   { href: "/admin/categories", label: "Категории" },
   { href: "/admin/subcategories", label: "Подкатегории" },
   { href: "/admin/attributes", label: "Характеристики" },
   { href: "/admin/attributes-assign", label: "Назначения характеристик" },
   { href: "/admin/reviews", label: "Отзывы" },
+  { href: "/admin/faq", label: "FAQ" },
+  { href: "/admin/pages", label: "Страницы" },
   { href: "/admin/settings", label: "Настройки" },
 ];
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getContactSettings } from "@/lib/settings-api";
+import { YandexMap } from "@/components/contacts/yandex-map";
 
 // Делаем страницу контактов динамической,
 // чтобы данные обновлялись при каждом заходе на страницу.
@@ -71,10 +72,20 @@ export default async function ContactsPage() {
 
         {/* Карта + форма */}
         <div className="space-y-4">
-          <div className="overflow-hidden rounded-lg border bg-muted h-56 md:h-64 flex items-center justify-center text-xs text-muted-foreground">
-            {/* Здесь позже можно вставить реальный iframe Яндекс/Google Maps */}
-            Карта с расположением шоурума
-          </div>
+          {settings?.map_latitude && settings?.map_longitude ? (
+            <div className="overflow-hidden rounded-lg border bg-muted h-56 md:h-64">
+              <YandexMap
+                latitude={settings.map_latitude}
+                longitude={settings.map_longitude}
+                zoom={settings.map_zoom || 15}
+                className="h-full w-full"
+              />
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-lg border bg-muted h-56 md:h-64 flex items-center justify-center text-xs text-muted-foreground">
+              Координаты карты не настроены. Установите их в админ-панели.
+            </div>
+          )}
 
           <div className="rounded-lg border bg-background p-4 md:p-6 space-y-4">
             <h2 className="text-lg font-semibold">Написать нам</h2>

@@ -26,11 +26,18 @@ export default async function CatalogPage() {
         </p>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {categories.map((category) => (
-            <li key={category.id}>
+          {categories.map((category, index) => (
+            <li 
+              key={category.id}
+              className="animate-in fade-in slide-in-from-bottom-4"
+              style={{
+                animationDelay: `${index * 100}ms`,
+                animationFillMode: "both",
+              }}
+            >
               <Link
                 href={`/catalog/${category.slug}`}
-                className="flex h-full flex-col rounded-lg border bg-background p-4 transition-colors hover:bg-accent"
+                className="flex h-full flex-col rounded-lg border bg-background p-4 transition-all duration-200 hover:bg-accent hover:shadow-md hover:scale-[1.02]"
               >
                 <div className="mb-3 overflow-hidden rounded-md border bg-muted flex h-32 items-center justify-center">
                   {category.image_url ? (

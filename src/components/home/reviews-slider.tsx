@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 import type { Review } from "@/lib/reviews-api";
 import {
@@ -96,6 +97,17 @@ export function ReviewsSlider({ reviews }: ReviewsSliderProps) {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm">{review.customer_name}</div>
                       <div className="text-lg mt-1">{renderStars(review.rating)}</div>
+                      {review.product_name && review.product_slug && (
+                        <div className="mt-2">
+                          <Link
+                            href={`/product/${review.product_slug}`}
+                            className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                          >
+                            <span>О товаре:</span>
+                            <span className="font-medium">{review.product_name}</span>
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">

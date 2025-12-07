@@ -3,6 +3,8 @@ import { HeroSlider } from "@/components/home/hero-slider";
 import { CategorySlider } from "@/components/home/category-slider";
 import { ReviewsSlider } from "@/components/home/reviews-slider";
 import { FeaturedProducts } from "@/components/home/featured-products";
+import { WhyChooseUs } from "@/components/home/why-choose-us";
+import { FAQSection } from "@/components/home/faq-section";
 import { getHomepageBanners } from "@/lib/homepage-banners-api";
 import { getCategories, getFeaturedProducts } from "@/lib/catalog-api";
 import { getActiveReviews } from "@/lib/reviews-api";
@@ -31,33 +33,11 @@ export default async function Home() {
       {/* Отзывы клиентов */}
       <ReviewsSlider reviews={reviews} />
 
-      {/* CTA блоки */}
-      <section className="container mx-auto px-4 space-y-6">
-        <h2 className="text-xl font-semibold">Почему удобно заказывать у нас</h2>
-        <div className="grid gap-4 md:grid-cols-3 text-sm">
-          <div className="rounded-lg border bg-background p-4">
-            <div className="font-medium mb-1">Заявка без предоплаты</div>
-            <p className="text-muted-foreground">
-              Вы оформляете корзину как заявку, менеджер связывается, уточняет
-              детали и только потом согласует оплату.
-            </p>
-          </div>
-          <div className="rounded-lg border bg-background p-4">
-            <div className="font-medium mb-1">Живой менеджер</div>
-            <p className="text-muted-foreground">
-              Заявка уходит напрямую в Telegram — вам ответит специалист, а не
-              автоответчик.
-            </p>
-          </div>
-          <div className="rounded-lg border bg-background p-4">
-            <div className="font-medium mb-1">Подбор под вашу баню</div>
-            <p className="text-muted-foreground">
-              Можем подобрать комплект «под ключ» под параметры помещения и ваши
-              пожелания по бюджету.
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* Почему выбирают нас */}
+      <WhyChooseUs />
+
+      {/* FAQ */}
+      <FAQSection />
 
       {/* Популярные решения */}
       <section className="bg-muted/40">

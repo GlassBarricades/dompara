@@ -3,6 +3,7 @@ import "./globals.css";
 import { AppProviders } from "./providers";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { NavigationLoading } from "@/components/navigation-loading";
 
 export const metadata: Metadata = {
   title: "Магазин для бани",
@@ -18,6 +19,7 @@ export default function RootLayout({
     <html lang="ru">
       <body className="flex min-h-screen flex-col bg-background text-foreground antialiased">
         <AppProviders>
+          <NavigationLoading />
           <SiteHeader />
           <main className="flex-1">{children}</main>
           <SiteFooter />

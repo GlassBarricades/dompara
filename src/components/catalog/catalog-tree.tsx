@@ -39,7 +39,7 @@ export function CatalogTree({
       <div className="space-y-1">
         <Link
           href="/catalog"
-          className={`block rounded-md px-2 py-1 text-xs ${
+          className={`block rounded-md px-2 py-1 text-xs transition-all duration-200 ${
             !activeCategorySlug
               ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -59,7 +59,7 @@ export function CatalogTree({
           return (
             <li key={cat.id}>
               <div
-                className={`flex items-center justify-between rounded-md px-2 py-1 ${
+                className={`flex items-center justify-between rounded-md px-2 py-1 transition-all duration-200 ${
                   isActiveCategory
                     ? "bg-accent text-accent-foreground"
                     : "text-foreground hover:bg-accent hover:text-accent-foreground"
@@ -67,7 +67,7 @@ export function CatalogTree({
               >
                 <Link
                   href={`/catalog/${cat.slug}`}
-                  className="flex-1 truncate"
+                  className="flex-1 truncate transition-colors duration-200"
                 >
                   {cat.name}
                 </Link>
@@ -75,7 +75,10 @@ export function CatalogTree({
                 {canToggle && (
                   <button
                     type="button"
-                    className="ml-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] text-muted-foreground hover:bg-background/40"
+                    className="ml-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] text-muted-foreground hover:bg-background/40 transition-all duration-200 transform"
+                    style={{
+                      transform: isOpen ? "rotate(0deg)" : "rotate(0deg)",
+                    }}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -85,21 +88,28 @@ export function CatalogTree({
                     }}
                     aria-label={isOpen ? "Свернуть подкатегории" : "Раскрыть подкатегории"}
                   >
-                    {isOpen ? "−" : "+"}
+                    <span className="transition-transform duration-200">
+                      {isOpen ? "−" : "+"}
+                    </span>
                   </button>
                 )}
               </div>
 
               {showSubcategories && (
-                <ul className="mt-1 space-y-0.5 border-l pl-3 text-xs text-muted-foreground">
-                  {cat.subcategories.map((sub) => {
+                <ul className="mt-1 space-y-0.5 border-l pl-3 text-xs text-muted-foreground animate-in slide-in-from-top fade-in duration-200">
+                  {cat.subcategories.map((sub, index) => {
                     const isActiveSub =
                       isActiveCategory && sub.slug === activeSubcategorySlug;
                     return (
-                      <li key={sub.id}>
+                      <li 
+                        key={sub.id}
+                        style={{
+                          animationDelay: `${index * 30}ms`,
+                        }}
+                      >
                         <Link
                           href={`/catalog/${cat.slug}/${sub.slug}`}
-                          className={`block truncate rounded-md px-2 py-0.5 ${
+                          className={`block truncate rounded-md px-2 py-0.5 transition-all duration-200 ${
                             isActiveSub
                               ? "bg-primary text-primary-foreground"
                               : "hover:bg-accent hover:text-accent-foreground"

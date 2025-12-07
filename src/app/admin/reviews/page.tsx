@@ -24,19 +24,49 @@ export default function AdminReviewsPage() {
     setLoading(true);
     setError(null);
 
-    const { data, error } = await supabase!
-      .from("reviews")
-      .select("id, customer_name, customer_photo_url, rating, text, sort_order, is_active, created_at")
-      .order("sort_order", { ascending: true });
+    try {
+      // Загружаем отзывы
+      const { data: reviewsData, error: reviewsError } = await supabase!
+        .from("reviews")
+        .select("id, product_id, customer_name, customer_photo_url, rating, text, sort_order, is_active, show_on_homepage, created_at")
+        .order("sort_order", { ascending: true });
 
-    if (error) {
-      console.error(error);
+      if (reviewsError) throw reviewsError;
+
+      // Собираем уникальные product_id
+      const productIds = (reviewsData ?? [])
+        .map((r: any) => r.product_id)
+        .filter((id: string | null): id is string => !!id);
+
+      // Загружаем товары, если есть привязанные
+      let productsMap = new Map<string, { id: string; name: string; slug: string }>();
+      if (productIds.length > 0) {
+        const { data: productsData, error: productsError } = await supabase!
+          .from("products")
+          .select("id, name, slug")
+          .in("id", productIds);
+
+        if (!productsError && productsData) {
+          productsData.forEach((p: any) => {
+            productsMap.set(p.id, p);
+          });
+        }
+      }
+
+      // Объединяем данные
+      const itemsWithProducts = (reviewsData ?? []).map((review: any) => ({
+        ...review,
+        product_name: review.product_id ? productsMap.get(review.product_id)?.name || null : null,
+        product_slug: review.product_id ? productsMap.get(review.product_id)?.slug || null : null,
+      }));
+
+      setItems(itemsWithProducts as Review[]);
+    } catch (err: any) {
+      console.error(err);
       setError("Не удалось загрузить отзывы");
-    } else {
-      setItems((data ?? []) as Review[]);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   async function handleDelete(id: string) {
@@ -103,28 +133,33 @@ export default function AdminReviewsPage() {
           <thead className="bg-muted/60 text-xs uppercase text-muted-foreground">
             <tr>
               <th className="px-3 py-2">Клиент</th>
+              <th className="px-3 py-2">Товар</th>
               <th className="px-3 py-2">Рейтинг</th>
               <th className="px-3 py-2">Текст</th>
               <th className="px-3 py-2">Сортировка</th>
               <th className="px-3 py-2">Статус</th>
+              <th className="px-3 py-2">На главной</th>
               <th className="px-3 py-2 text-right">Действия</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-3 py-4 text-center text-muted-foreground">
+                <td colSpan={8} className="px-3 py-4 text-center text-muted-foreground">
                   Загрузка...
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-4 text-center text-muted-foreground">
+                <td colSpan={8} className="px-3 py-4 text-center text-muted-foreground">
                   Пока нет отзывов. Создайте первый отзыв.
                 </td>
               </tr>
             ) : (
-              items.map((item) => (
+              items.map((item) => {
+                const productName = item.product_name;
+                const productSlug = item.product_slug;
+                return (
                 <tr key={item.id}>
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-2">
@@ -137,6 +172,25 @@ export default function AdminReviewsPage() {
                       )}
                       <span className="font-medium">{item.customer_name}</span>
                     </div>
+                  </td>
+                  <td className="px-3 py-3">
+                    {item.product_id ? (
+                      productName && productSlug ? (
+                        <Link
+                          href={`/product/${productSlug}`}
+                          className="text-sm text-primary hover:underline"
+                          target="_blank"
+                        >
+                          {productName}
+                        </Link>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">
+                          Товар удален (ID: {item.product_id.slice(0, 8)}...)
+                        </span>
+                      )
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Общий отзыв</span>
+                    )}
                   </td>
                   <td className="px-3 py-3">
                     <div className="text-sm">{renderStars(item.rating)}</div>
@@ -160,6 +214,17 @@ export default function AdminReviewsPage() {
                       {item.is_active ? "Активен" : "Скрыт"}
                     </span>
                   </td>
+                  <td className="px-3 py-3">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs ${
+                        item.show_on_homepage
+                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {item.show_on_homepage ? "Да" : "Нет"}
+                    </span>
+                  </td>
                   <td className="px-3 py-3 text-right">
                     <div className="flex justify-end gap-1">
                       <Button
@@ -181,7 +246,8 @@ export default function AdminReviewsPage() {
                     </div>
                   </td>
                 </tr>
-              ))
+              );
+              })
             )}
           </tbody>
         </table>

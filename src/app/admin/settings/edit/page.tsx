@@ -15,6 +15,9 @@ interface ContactSettingsForm {
   company_name: string;
   requisites: string;
   logo_url: string;
+  map_latitude: string;
+  map_longitude: string;
+  map_zoom: string;
 }
 
 const emptyForm: ContactSettingsForm = {
@@ -26,6 +29,9 @@ const emptyForm: ContactSettingsForm = {
   company_name: "",
   requisites: "",
   logo_url: "",
+  map_latitude: "",
+  map_longitude: "",
+  map_zoom: "15",
 };
 
 export default function AdminSettingsEditPage() {
@@ -52,7 +58,7 @@ export default function AdminSettingsEditPage() {
     const { data, error } = await supabase!
       .from("contact_settings")
       .select(
-        "id, phone, email, telegram, address, showroom_hours, company_name, requisites, logo_url"
+        "id, phone, email, telegram, address, showroom_hours, company_name, requisites, logo_url, map_latitude, map_longitude, map_zoom"
       )
       .limit(1)
       .maybeSingle();
@@ -71,6 +77,9 @@ export default function AdminSettingsEditPage() {
         company_name: data.company_name ?? "",
         requisites: data.requisites ?? "",
         logo_url: data.logo_url ?? "",
+        map_latitude: data.map_latitude?.toString() ?? "",
+        map_longitude: data.map_longitude?.toString() ?? "",
+        map_zoom: data.map_zoom?.toString() ?? "15",
       });
     } else {
       setForm(emptyForm);
@@ -104,6 +113,9 @@ export default function AdminSettingsEditPage() {
         company_name: form.company_name || null,
         requisites: form.requisites || null,
         logo_url: form.logo_url || null,
+        map_latitude: form.map_latitude ? parseFloat(form.map_latitude) : null,
+        map_longitude: form.map_longitude ? parseFloat(form.map_longitude) : null,
+        map_zoom: form.map_zoom ? parseInt(form.map_zoom, 10) : 15,
       };
 
       if (form.id) {
@@ -246,6 +258,67 @@ export default function AdminSettingsEditPage() {
                 onChange={(e) => handleChange("requisites", e.target.value)}
                 placeholder="ИНН / ОГРНИП, банковские реквизиты и т.п."
               />
+            </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="text-sm font-semibold">Настройки карты</h3>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Широта (latitude)</label>
+                  <input
+                    type="number"
+                    step="any"
+                    className="w-full rounded-md border px-3 py-2 text-sm"
+                    value={form.map_latitude}
+                    onChange={(e) => handleChange("map_latitude", e.target.value)}
+                    placeholder="53.9045"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Например: 53.9045 (для Минска)
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Долгота (longitude)</label>
+                  <input
+                    type="number"
+                    step="any"
+                    className="w-full rounded-md border px-3 py-2 text-sm"
+                    value={form.map_longitude}
+                    onChange={(e) => handleChange("map_longitude", e.target.value)}
+                    placeholder="27.5615"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Например: 27.5615 (для Минска)
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Масштаб (zoom)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="19"
+                    className="w-full rounded-md border px-3 py-2 text-sm"
+                    value={form.map_zoom}
+                    onChange={(e) => handleChange("map_zoom", e.target.value)}
+                    placeholder="15"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    От 1 (весь мир) до 19 (максимальное приближение)
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Координаты можно найти на{" "}
+                <a
+                  href="https://yandex.ru/maps"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Яндекс.Картах
+                </a>
+                {" "}— кликните правой кнопкой мыши на нужное место и выберите "Что здесь?"
+              </p>
             </div>
 
             <div className="flex gap-2 pt-2">

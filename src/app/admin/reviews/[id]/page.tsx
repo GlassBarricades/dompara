@@ -5,14 +5,23 @@ import { useRouter, useParams } from "next/navigation";
 
 import { supabase } from "@/lib/supabase-client";
 import { Button } from "@/components/ui/button";
+import { ProductSelect } from "@/components/ui/product-select";
+
+interface ProductOption {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 interface ReviewFormState {
+  product_id: string;
   customer_name: string;
   customer_photo_url: string;
   rating: number;
   text: string;
   sort_order: number;
   is_active: boolean;
+  show_on_homepage: boolean;
 }
 
 export default function EditReviewPage() {
@@ -21,14 +30,18 @@ export default function EditReviewPage() {
   const id = params.id;
 
   const [form, setForm] = useState<ReviewFormState>({
+    product_id: "",
     customer_name: "",
     customer_photo_url: "",
     rating: 5,
     text: "",
     sort_order: 0,
     is_active: true,
+    show_on_homepage: false,
   });
+  const [products, setProducts] = useState<ProductOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [productsLoading, setProductsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,8 +49,32 @@ export default function EditReviewPage() {
 
   useEffect(() => {
     if (!canUseSupabase || !id) return;
-    void loadReview();
+    void Promise.all([loadReview(), loadProducts()]);
   }, [canUseSupabase, id]);
+
+  async function loadProducts() {
+    setProductsLoading(true);
+    try {
+      // Загружаем все товары (включая неактивные) для возможности
+      // привязать отзыв к товару, который мог быть временно скрыт
+      // Если товар был удален, отзыв останется с product_id, но товар не будет в списке
+      const { data, error } = await supabase!
+        .from("products")
+        .select("id, name, slug")
+        .order("name", { ascending: true });
+
+      if (error) {
+        console.error("Error loading products:", error);
+        throw error;
+      }
+      setProducts((data ?? []) as ProductOption[]);
+    } catch (err) {
+      console.error("Failed to load products:", err);
+      // Не показываем ошибку как критическую, просто логируем
+    } finally {
+      setProductsLoading(false);
+    }
+  }
 
   async function loadReview() {
     setLoading(true);
@@ -58,12 +95,14 @@ export default function EditReviewPage() {
       }
 
       setForm({
+        product_id: data.product_id || "",
         customer_name: data.customer_name || "",
         customer_photo_url: data.customer_photo_url || "",
         rating: data.rating || 5,
         text: data.text || "",
         sort_order: data.sort_order || 0,
         is_active: data.is_active !== false,
+        show_on_homepage: data.show_on_homepage === true,
       });
     } catch (err) {
       console.error(err);
@@ -101,12 +140,14 @@ export default function EditReviewPage() {
       const { error } = await supabase!
         .from("reviews")
         .update({
+          product_id: form.product_id || null,
           customer_name: form.customer_name,
           customer_photo_url: form.customer_photo_url || null,
           rating: form.rating,
           text: form.text,
           sort_order: form.sort_order,
           is_active: form.is_active,
+          show_on_homepage: form.show_on_homepage,
         })
         .eq("id", id);
 
@@ -192,6 +233,30 @@ export default function EditReviewPage() {
 
       <form className="max-w-xl space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-1">
+          <label className="text-sm font-medium">
+            Товар (опционально)
+          </label>
+          {productsLoading || loading ? (
+            <div className="w-full rounded-md border bg-background px-3 py-2 text-sm text-muted-foreground">
+              Загрузка товаров...
+            </div>
+          ) : (
+            <ProductSelect
+              products={products}
+              value={form.product_id}
+              onChange={(value) => handleChange("product_id", value)}
+              disabled={productsLoading || loading}
+              placeholder="Общий отзыв"
+            />
+          )}
+          {!productsLoading && !loading && products.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Если товар не выбран, отзыв будет общим. Если выбран товар, отзыв будет привязан к нему и может отображаться на странице товара.
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1">
           <label className="text-sm font-medium">Имя клиента</label>
           <input
             type="text"
@@ -253,17 +318,34 @@ export default function EditReviewPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            id="is_active"
-            type="checkbox"
-            className="h-4 w-4 rounded border"
-            checked={form.is_active}
-            onChange={(e) => handleChange("is_active", e.target.checked)}
-          />
-          <label htmlFor="is_active" className="text-sm">
-            Показывать отзыв на главной странице
-          </label>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              id="is_active"
+              type="checkbox"
+              className="h-4 w-4 rounded border"
+              checked={form.is_active}
+              onChange={(e) => handleChange("is_active", e.target.checked)}
+            />
+            <label htmlFor="is_active" className="text-sm">
+              Активен (показывать отзыв)
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              id="show_on_homepage"
+              type="checkbox"
+              className="h-4 w-4 rounded border"
+              checked={form.show_on_homepage}
+              onChange={(e) => handleChange("show_on_homepage", e.target.checked)}
+            />
+            <label htmlFor="show_on_homepage" className="text-sm">
+              Показывать на главной странице
+            </label>
+          </div>
+          <p className="text-xs text-muted-foreground pl-6">
+            Отзывы с этим флагом будут отображаться на главной странице. Можно показывать как общие отзывы, так и отзывы, привязанные к конкретному товару.
+          </p>
         </div>
 
         <div className="flex gap-2 pt-2">

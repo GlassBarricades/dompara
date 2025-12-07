@@ -1,7 +1,9 @@
 import {
   getProductBySlug,
   getProductAttributesForDisplay,
+  getSimilarProducts,
 } from "@/lib/catalog-api";
+import { getProductReviews } from "@/lib/reviews-api";
 import { ProductPageInner } from "./product-page-inner";
 
 interface ProductPageProps {
@@ -25,11 +27,22 @@ export default async function ProductPage({ params }: ProductPageProps) {
     );
   }
 
-  const attributes = await getProductAttributesForDisplay(
-    product.id,
-    product.category_id,
-    product.subcategory_id
-  );
+  const [attributes, similarProducts, reviews] = await Promise.all([
+    getProductAttributesForDisplay(
+      product.id,
+      product.category_id,
+      product.subcategory_id
+    ),
+    getSimilarProducts(product.id, product.category_id, 4),
+    getProductReviews(product.id),
+  ]);
 
-  return <ProductPageInner product={product} attributes={attributes} />;
+  return (
+    <ProductPageInner
+      product={product}
+      attributes={attributes}
+      similarProducts={similarProducts}
+      reviews={reviews}
+    />
+  );
 }

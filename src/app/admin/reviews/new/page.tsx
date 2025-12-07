@@ -1,36 +1,80 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabase-client";
 import { Button } from "@/components/ui/button";
+import { ProductSelect } from "@/components/ui/product-select";
+
+interface ProductOption {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 interface ReviewFormState {
+  product_id: string;
   customer_name: string;
   customer_photo_url: string;
   rating: number;
   text: string;
   sort_order: number;
   is_active: boolean;
+  show_on_homepage: boolean;
 }
 
 const emptyForm: ReviewFormState = {
+  product_id: "",
   customer_name: "",
   customer_photo_url: "",
   rating: 5,
   text: "",
   sort_order: 0,
   is_active: true,
+  show_on_homepage: false,
 };
 
 export default function NewReviewPage() {
   const router = useRouter();
   const [form, setForm] = useState<ReviewFormState>(emptyForm);
+  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canUseSupabase = !!supabase;
+
+  useEffect(() => {
+    if (!canUseSupabase) return;
+    void loadProducts();
+  }, [canUseSupabase]);
+
+  async function loadProducts() {
+    setLoading(true);
+    try {
+      // Загружаем только активные товары для выбора
+      // Если товар был удален, отзыв останется в базе с product_id,
+      // но товар не будет доступен для выбора при создании нового отзыва
+      const { data, error } = await supabase!
+        .from("products")
+        .select("id, name, slug")
+        .eq("is_active", true)
+        .order("name", { ascending: true });
+
+      if (error) {
+        console.error("Error loading products:", error);
+        throw error;
+      }
+      setProducts((data ?? []) as ProductOption[]);
+    } catch (err) {
+      console.error("Failed to load products:", err);
+      // Не показываем ошибку как критическую, просто логируем
+      // Поле выбора товара все равно будет видно
+    } finally {
+      setLoading(false);
+    }
+  }
 
   function handleChange<K extends keyof ReviewFormState>(
     key: K,
@@ -58,12 +102,14 @@ export default function NewReviewPage() {
 
     try {
       const { error } = await supabase!.from("reviews").insert({
+        product_id: form.product_id || null,
         customer_name: form.customer_name,
         customer_photo_url: form.customer_photo_url || null,
         rating: form.rating,
         text: form.text,
         sort_order: form.sort_order,
         is_active: form.is_active,
+        show_on_homepage: form.show_on_homepage,
       });
 
       if (error) throw error;
@@ -111,6 +157,30 @@ export default function NewReviewPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <form className="max-w-xl space-y-4" onSubmit={handleSubmit}>
+        <div className="space-y-1">
+          <label className="text-sm font-medium">
+            Товар (опционально)
+          </label>
+          {loading ? (
+            <div className="w-full rounded-md border bg-background px-3 py-2 text-sm text-muted-foreground">
+              Загрузка товаров...
+            </div>
+          ) : (
+            <ProductSelect
+              products={products}
+              value={form.product_id}
+              onChange={(value) => handleChange("product_id", value)}
+              disabled={loading}
+              placeholder="Общий отзыв"
+            />
+          )}
+          {!loading && products.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Если товар не выбран, отзыв будет общим. Если выбран товар, отзыв будет привязан к нему и может отображаться на странице товара.
+            </p>
+          )}
+        </div>
+
         <div className="space-y-1">
           <label className="text-sm font-medium">Имя клиента</label>
           <input
@@ -173,17 +243,34 @@ export default function NewReviewPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            id="is_active"
-            type="checkbox"
-            className="h-4 w-4 rounded border"
-            checked={form.is_active}
-            onChange={(e) => handleChange("is_active", e.target.checked)}
-          />
-          <label htmlFor="is_active" className="text-sm">
-            Показывать отзыв на главной странице
-          </label>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              id="is_active"
+              type="checkbox"
+              className="h-4 w-4 rounded border"
+              checked={form.is_active}
+              onChange={(e) => handleChange("is_active", e.target.checked)}
+            />
+            <label htmlFor="is_active" className="text-sm">
+              Активен (показывать отзыв)
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              id="show_on_homepage"
+              type="checkbox"
+              className="h-4 w-4 rounded border"
+              checked={form.show_on_homepage}
+              onChange={(e) => handleChange("show_on_homepage", e.target.checked)}
+            />
+            <label htmlFor="show_on_homepage" className="text-sm">
+              Показывать на главной странице
+            </label>
+          </div>
+          <p className="text-xs text-muted-foreground pl-6">
+            Отзывы с этим флагом будут отображаться на главной странице. Можно показывать как общие отзывы, так и отзывы, привязанные к конкретному товару.
+          </p>
         </div>
 
         <div className="flex gap-2 pt-2">

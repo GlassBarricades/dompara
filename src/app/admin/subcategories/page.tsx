@@ -27,6 +27,7 @@ const emptyForm = {
   description: "",
   sort_order: 0,
   image_url: "" as string | "",
+  vertical_card_layout: false,
 };
 
 export default function AdminSubcategoriesPage() {
@@ -60,7 +61,7 @@ export default function AdminSubcategoriesPage() {
           .order("sort_order", { ascending: true }),
         supabase!
           .from("subcategories")
-          .select("id, category_id, name, slug, description, sort_order, image_url")
+          .select("id, category_id, name, slug, description, sort_order, image_url, vertical_card_layout")
           .order("sort_order", { ascending: true }),
       ]);
 
@@ -115,6 +116,7 @@ export default function AdminSubcategoriesPage() {
       description: row.description ?? "",
       sort_order: row.sort_order,
       image_url: (row as any).image_url ?? "",
+      vertical_card_layout: (row as any).vertical_card_layout ?? false,
     });
     setSlugTouched(true);
   }
@@ -141,6 +143,7 @@ export default function AdminSubcategoriesPage() {
             description: form.description || null,
             sort_order: form.sort_order,
             image_url: form.image_url || null,
+            vertical_card_layout: form.vertical_card_layout,
           })
           .eq("id", editingId);
 
@@ -153,6 +156,7 @@ export default function AdminSubcategoriesPage() {
           description: form.description || null,
           sort_order: form.sort_order,
           image_url: form.image_url || null,
+          vertical_card_layout: form.vertical_card_layout,
         });
 
         if (error) throw error;
@@ -389,6 +393,24 @@ export default function AdminSubcategoriesPage() {
                   handleChange("sort_order", Number(e.target.value) || 0)
                 }
               />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  id="vertical_card_layout"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border"
+                  checked={form.vertical_card_layout}
+                  onChange={(e) => handleChange("vertical_card_layout", e.target.checked)}
+                />
+                <label htmlFor="vertical_card_layout" className="text-sm">
+                  Вертикальное отображение карточек (более высокие изображения)
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground pl-6">
+                При включении этой опции карточки товаров в каталоге будут отображаться с более высокими изображениями
+              </p>
             </div>
 
             <div className="flex gap-2 pt-2">

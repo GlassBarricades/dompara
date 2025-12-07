@@ -117,3 +117,123 @@
   margin-top: 0.75rem;
   margin-bottom: 0.5rem;
 }
+
+/* Плавные переходы и анимации */
+@layer utilities {
+  /* Анимации появления */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-in-from-bottom {
+    from {
+      transform: translateY(1rem);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-in-from-top {
+    from {
+      transform: translateY(-1rem);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes zoom-in {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-in {
+    animation-fill-mode: both;
+  }
+
+  .fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  .slide-in-from-bottom-4 {
+    animation: slide-in-from-bottom 0.4s ease-out;
+  }
+
+  .slide-in-from-top {
+    animation: slide-in-from-top 0.3s ease-out;
+  }
+
+  .zoom-in {
+    animation: zoom-in 0.2s ease-out;
+  }
+
+  /* Плавные переходы для страниц */
+  main {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  /* Плавные переходы для ссылок */
+  a {
+    transition: all 0.2s ease-in-out;
+  }
+
+  /* Плавные переходы для кнопок */
+  button {
+    transition: all 0.2s ease-in-out;
+  }
+
+  /* Touch-оптимизация для мобильных устройств */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Минимальные размеры для touch-элементов (рекомендация Apple: 44x44px) */
+  @media (hover: none) and (pointer: coarse) {
+    button,
+    a,
+    input[type="button"],
+    input[type="submit"],
+    [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Улучшенная прокрутка на мобильных */
+  @media (hover: none) and (pointer: coarse) {
+    * {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  /* Анимация slide-in-from-left для drawer */
+  @keyframes slide-in-from-left {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  .slide-in-from-left {
+    animation: slide-in-from-left 0.3s ease-out;
+  }
+}
