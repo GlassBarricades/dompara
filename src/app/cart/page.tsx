@@ -4,6 +4,9 @@ import { useState } from "react";
 import { observer } from "mobx-react-lite";
 import { useCartStore } from "@/stores/cart-context";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { formatPhoneNumber, validatePhone } from "@/lib/phone-mask";
+import { toast } from "sonner";
 
 export const dynamic = 'force-dynamic';
 
@@ -17,21 +20,82 @@ function CartPageInner() {
   const [telegram, setTelegram] = useState("");
   const [comment, setComment] = useState("");
 
+  const [errors, setErrors] = useState<{
+    name?: string;
+    phone?: string;
+    email?: string;
+  }>({});
+  const [touched, setTouched] = useState<{
+    name?: boolean;
+    phone?: boolean;
+    email?: boolean;
+  }>({});
+
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const validateField = (field: "name" | "phone" | "email", value: string) => {
+    const newErrors = { ...errors };
+
+    if (field === "name") {
+      if (!value.trim()) {
+        newErrors.name = "Имя обязательно для заполнения";
+      } else if (value.trim().length < 2) {
+        newErrors.name = "Имя должно содержать минимум 2 символа";
+      } else {
+        delete newErrors.name;
+      }
+    }
+
+    if (field === "phone") {
+      if (!value.trim()) {
+        newErrors.phone = "Телефон обязательно для заполнения";
+      } else if (!validatePhone(value)) {
+        newErrors.phone = "Введите корректный номер телефона (+375 XX XXX-XX-XX)";
+      } else {
+        delete newErrors.phone;
+      }
+    }
+
+    if (field === "email" && value.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value)) {
+        newErrors.email = "Введите корректный email адрес";
+      } else {
+        delete newErrors.email;
+      }
+    }
+
+    setErrors(newErrors);
+    return !newErrors[field];
+  };
+
+  const handleBlur = (field: "name" | "phone" | "email") => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    if (field === "name") validateField("name", name);
+    if (field === "phone") validateField("phone", phone);
+    if (field === "email") validateField("email", email);
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!hasItems || submitting) return;
 
-    if (!name.trim() || !phone.trim()) {
-      setError("Пожалуйста, заполните имя и телефон");
+    // Валидация всех полей
+    const nameValid = validateField("name", name);
+    const phoneValid = validateField("phone", phone);
+    const emailValid = !email.trim() || validateField("email", email);
+
+    setTouched({ name: true, phone: true, email: true });
+
+    if (!nameValid || !phoneValid || !emailValid) {
+      toast.error("Пожалуйста, исправьте ошибки в форме");
       return;
     }
 
     setSubmitting(true);
-    setError(null);
+    setSubmitError(null);
 
     try {
       const response = await fetch("/api/cart/submit", {
@@ -68,13 +132,25 @@ function CartPageInner() {
       setEmail("");
       setTelegram("");
       setComment("");
+      setErrors({});
+      setTouched({});
+      toast.success("Заявка успешно отправлена!");
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Не удалось отправить заявку");
+      setSubmitError(err.message || "Не удалось отправить заявку");
+      toast.error(err.message || "Не удалось отправить заявку");
     } finally {
       setSubmitting(false);
     }
   }
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setPhone(formatted);
+    if (touched.phone) {
+      validateField("phone", formatted);
+    }
+  };
 
   return (
     <main className="container mx-auto px-4 py-8 space-y-6">
@@ -144,9 +220,9 @@ function CartPageInner() {
               заказа.
             </p>
 
-            {error && (
+            {submitError && (
               <p className="text-sm text-red-600">
-                {error}
+                {submitError}
               </p>
             )}
 
@@ -155,12 +231,18 @@ function CartPageInner() {
                 <label className="text-sm font-medium">
                   Имя <span className="text-red-500">*</span>
                 </label>
-                <input
+                <Input
                   type="text"
-                  className="w-full rounded-md border px-3 py-2 text-sm"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (touched.name) {
+                      validateField("name", e.target.value);
+                    }
+                  }}
+                  onBlur={() => handleBlur("name")}
+                  error={touched.name ? errors.name : undefined}
+                  placeholder="Ваше имя"
                 />
               </div>
 
@@ -168,22 +250,30 @@ function CartPageInner() {
                 <label className="text-sm font-medium">
                   Телефон <span className="text-red-500">*</span>
                 </label>
-                <input
+                <Input
                   type="tel"
-                  className="w-full rounded-md border px-3 py-2 text-sm"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
+                  onChange={handlePhoneChange}
+                  onBlur={() => handleBlur("phone")}
+                  error={touched.phone ? errors.phone : undefined}
+                  placeholder="+375 (XX) XXX-XX-XX"
                 />
               </div>
 
               <div className="space-y-1">
                 <label className="text-sm font-medium">Email</label>
-                <input
+                <Input
                   type="email"
-                  className="w-full rounded-md border px-3 py-2 text-sm"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (touched.email) {
+                      validateField("email", e.target.value);
+                    }
+                  }}
+                  onBlur={() => handleBlur("email")}
+                  error={touched.email ? errors.email : undefined}
+                  placeholder="email@example.com"
                 />
               </div>
 

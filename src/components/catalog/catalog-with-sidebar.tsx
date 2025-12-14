@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CatalogTree } from "@/components/catalog/catalog-tree";
 import { Breadcrumbs } from "@/components/catalog/breadcrumbs";
 import { QuickViewModal } from "@/components/product/quick-view-modal";
+import { MobileFiltersDrawer } from "@/components/catalog/mobile-filters-drawer";
 import type {
   CatalogCategoryNode,
   FilterableAttributeDefinition,
@@ -73,6 +74,44 @@ export function CatalogWithSidebar({
   const urlView = (searchParams.get("view") as ViewMode) || "grid";
   const urlPage = Number(searchParams.get("page")) || 1;
 
+  // Восстанавливаем фильтры по атрибутам из URL
+  const urlSelectedAttrs = useMemo(() => {
+    const attrs: Record<string, AttrFilterState> = {};
+    searchParams.forEach((value, key) => {
+      if (key.startsWith("attr_")) {
+        const attrId = key.replace("attr_", "");
+        // Поддерживаем разные форматы значений
+        if (value.includes(",")) {
+          // Множественный выбор (массив значений)
+          attrs[attrId] = {
+            type: "multiselect",
+            value: value.split(",").filter(Boolean),
+          };
+        } else if (value === "true" || value === "false") {
+          // Булево значение
+          attrs[attrId] = {
+            type: "boolean",
+            value: value as "true" | "false",
+          };
+        } else if (value.includes("-")) {
+          // Числовой диапазон (min-max)
+          const [min, max] = value.split("-").map(Number);
+          attrs[attrId] = {
+            type: "number",
+            value: { min: isNaN(min) ? undefined : min, max: isNaN(max) ? undefined : max },
+          };
+        } else if (value) {
+          // Одиночное значение
+          attrs[attrId] = {
+            type: "select",
+            value: [value],
+          };
+        }
+      }
+    });
+    return attrs;
+  }, [searchParams]);
+
   const [search, setSearch] = useState(urlSearch);
   const [minPrice, setMinPrice] = useState<string>(urlMinPrice);
   const [maxPrice, setMaxPrice] = useState<string>(urlMaxPrice);
@@ -82,10 +121,13 @@ export function CatalogWithSidebar({
 
   const [selectedAttrs, setSelectedAttrs] = useState<
     Record<string, AttrFilterState>
-  >({});
+  >(urlSelectedAttrs);
 
   // Состояние для модального окна быстрого просмотра
   const [quickViewSlug, setQuickViewSlug] = useState<string | null>(null);
+  
+  // Состояние для мобильного drawer с фильтрами
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Синхронизация с URL
   useEffect(() => {
@@ -95,7 +137,8 @@ export function CatalogWithSidebar({
     setSort(urlSort);
     setViewMode(urlView);
     setCurrentPage(urlPage);
-  }, [urlSearch, urlMinPrice, urlMaxPrice, urlSort, urlView, urlPage]);
+    setSelectedAttrs(urlSelectedAttrs);
+  }, [urlSearch, urlMinPrice, urlMaxPrice, urlSort, urlView, urlPage, urlSelectedAttrs]);
 
   // Вычисляем диапазон цен для slider
   const priceRange = useMemo(() => {
@@ -110,7 +153,7 @@ export function CatalogWithSidebar({
   }, [products]);
 
   // Обновление URL при изменении фильтров
-  const updateURL = (updates: Record<string, string | number | null>) => {
+  const updateURL = (updates: Record<string, string | number | null>, resetPage = true) => {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(updates).forEach(([key, value]) => {
       if (value === null || value === "" || value === "default" || value === "grid") {
@@ -119,6 +162,55 @@ export function CatalogWithSidebar({
         params.set(key, String(value));
       }
     });
+    // Сбрасываем страницу при изменении фильтров (но не при изменении самой страницы)
+    if (resetPage && !("page" in updates)) {
+      params.delete("page");
+    } else if ("page" in updates) {
+      // При изменении страницы сохраняем её в URL (кроме страницы 1, которую можно не показывать)
+      if (updates.page === null || updates.page === 1) {
+        params.delete("page");
+      } else {
+        params.set("page", String(updates.page));
+      }
+    }
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
+  // Обновление URL для фильтров по атрибутам
+  const updateAttrsURL = (attrs: Record<string, AttrFilterState>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    // Удаляем все старые параметры атрибутов
+    searchParams.forEach((_, key) => {
+      if (key.startsWith("attr_")) {
+        params.delete(key);
+      }
+    });
+    
+    // Добавляем новые параметры атрибутов
+    Object.entries(attrs).forEach(([attrId, filter]) => {
+      if (!filter) return;
+      
+      const paramKey = `attr_${attrId}`;
+      
+      if (filter.type === "multiselect" || filter.type === "select" || filter.type === "string") {
+        const values = Array.isArray(filter.value) ? filter.value : [];
+        if (values.length > 0) {
+          params.set(paramKey, values.join(","));
+        }
+      } else if (filter.type === "boolean") {
+        if (filter.value !== "all") {
+          params.set(paramKey, filter.value);
+        }
+      } else if (filter.type === "number") {
+        const min = filter.value?.min;
+        const max = filter.value?.max;
+        if (typeof min === "number" || typeof max === "number") {
+          params.set(paramKey, `${min ?? ""}-${max ?? ""}`);
+        }
+      }
+    });
+    
     params.delete("page"); // Сбрасываем страницу при изменении фильтров
     router.replace(`?${params.toString()}`, { scroll: false });
   };
@@ -229,6 +321,7 @@ export function CatalogWithSidebar({
                     next[attrId] = { ...current, value: newValues } as AttrFilterState;
                   }
                 }
+                updateAttrsURL(next);
                 return next;
               });
             },
@@ -365,11 +458,11 @@ export function CatalogWithSidebar({
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    updateURL({ page });
+    updateURL({ page }, false); // Не сбрасываем страницу, так как мы её изменяем
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  function renderAttributeFilters() {
+  const renderAttributeFilters = () => {
     if (!filterAttributes || filterAttributes.length === 0) return null;
 
     return (
@@ -438,6 +531,7 @@ export function CatalogWithSidebar({
                                     type: multiple ? "multiselect" : "select",
                                     value: values,
                                   };
+                                  updateAttrsURL(next);
                                   return next;
                                 });
                               }}
@@ -464,10 +558,9 @@ export function CatalogWithSidebar({
                     value={val}
                     onChange={(e) => {
                       const value = e.target.value as "all" | "true" | "false";
-                      setSelectedAttrs((prev) => ({
-                        ...prev,
-                        [key]: { type: "boolean", value },
-                      }));
+                      const next: Record<string, AttrFilterState> = { ...selectedAttrs, [key]: { type: "boolean", value } };
+                      setSelectedAttrs(next);
+                      updateAttrsURL(next);
                     }}
                   >
                     <option value="all">Любое</option>
@@ -531,6 +624,7 @@ export function CatalogWithSidebar({
                                   type: "string",
                                   value: values,
                                 };
+                                updateAttrsURL(next);
                                 return next;
                               });
                             }}
@@ -549,11 +643,47 @@ export function CatalogWithSidebar({
         </div>
       </div>
     );
-  }
+  };
+
+  // Обработчики для мобильного drawer
+  const handleResetFilters = () => {
+    setSearch("");
+    setMinPrice("");
+    setMaxPrice("");
+    setSort("default");
+    setSelectedAttrs({});
+    setCurrentPage(1);
+    updateAttrsURL({});
+    updateURL({
+      search: null,
+      minPrice: null,
+      maxPrice: null,
+      sort: null,
+      page: null,
+    });
+  };
 
   return (
-    <div className="grid gap-6 md:grid-cols-[260px,minmax(0,1fr)]">
-      <aside className="space-y-4">
+    <>
+      {/* Липкая кнопка фильтров для мобильных */}
+      <div className="md:hidden fixed bottom-4 left-4 right-4 z-30">
+        <Button
+          onClick={() => setMobileFiltersOpen(true)}
+          className="w-full shadow-lg h-12 text-base font-medium"
+          size="lg"
+        >
+          <span className="mr-2">🔍</span>
+          Фильтры
+          {activeFiltersCount > 0 && (
+            <span className="ml-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-background px-1.5 text-xs font-semibold text-primary">
+              {activeFiltersCount}
+            </span>
+          )}
+        </Button>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-[260px,minmax(0,1fr)]">
+        <aside className="hidden md:block space-y-4">
         <CatalogTree
           tree={tree}
           activeCategorySlug={activeCategorySlug}
@@ -581,6 +711,7 @@ export function CatalogWithSidebar({
                   setSort("default");
                   setSelectedAttrs({});
                   setCurrentPage(1);
+                  updateAttrsURL({});
                   updateURL({
                     search: null,
                     minPrice: null,
@@ -700,7 +831,7 @@ export function CatalogWithSidebar({
         </div>
       </aside>
 
-      <div className="space-y-4">
+      <div className="space-y-4 pb-20 md:pb-4">
         {header}
 
         {/* Чипы активных фильтров */}
@@ -858,7 +989,7 @@ export function CatalogWithSidebar({
                       {product.short_description.replace(/<[^>]*>/g, "")}
                     </p>
                   )}
-                  <div className={`mt-3 space-y-2 ${viewMode === "list" ? "flex items-center justify-between" : ""}`}>
+                  <div className={`mt-3 space-y-2 ${viewMode === "list" ? "flex flex-wrap items-center justify-between" : ""}`}>
                     {/* Остатки */}
                     {!product.is_custom_order &&
                       product.stock_quantity !== null &&
@@ -878,11 +1009,11 @@ export function CatalogWithSidebar({
                           </span>
                         </div>
                       )}
-                    <div className={`flex items-center justify-between text-sm font-semibold ${viewMode === "list" ? "gap-4" : "flex-col gap-2"}`}>
+                    <div className={`flex flex-wrap items-center justify-between text-sm font-semibold ${viewMode === "list" ? "gap-4" : "flex-col gap-2"}`}>
                       <span className={viewMode === "list" ? "text-lg" : ""}>
                         {Number(product.price ?? 0).toLocaleString("ru-RU")} BYN
                       </span>
-                      <div className="flex items-center gap-2 w-full">
+                      <div className="flex flex-wrap items-center gap-2 w-full">
                         <Button
                           variant="outline"
                           size="sm"
@@ -895,14 +1026,9 @@ export function CatalogWithSidebar({
                         >
                           👁 Быстрый просмотр
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 border-primary text-xs text-primary"
-                          onClick={(e) => e.preventDefault()}
-                        >
+                        <span className="inline-flex items-center justify-center rounded-md border border-primary bg-background px-3 py-1.5 text-xs font-medium text-primary flex-1">
                           Подробнее
-                        </Button>
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -960,6 +1086,7 @@ export function CatalogWithSidebar({
         </>
         )}
       </div>
+      </div>
 
       {/* Модальное окно быстрого просмотра */}
       <QuickViewModal
@@ -967,6 +1094,45 @@ export function CatalogWithSidebar({
         isOpen={quickViewSlug !== null}
         onClose={() => setQuickViewSlug(null)}
       />
-    </div>
+
+      {/* Мобильный drawer с фильтрами */}
+      <MobileFiltersDrawer
+        isOpen={mobileFiltersOpen}
+        onClose={() => setMobileFiltersOpen(false)}
+        tree={tree}
+        filterAttributes={filterAttributes}
+        attributeValues={attributeValues}
+        activeCategorySlug={activeCategorySlug}
+        activeSubcategorySlug={activeSubcategorySlug}
+        search={search}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        sort={sort}
+        selectedAttrs={selectedAttrs}
+        priceRange={priceRange}
+        activeFiltersCount={activeFiltersCount}
+        onSearchChange={(value) => {
+          setSearch(value);
+          updateURL({ search: value || null, page: null });
+        }}
+        onMinPriceChange={(value) => {
+          setMinPrice(value);
+          updateURL({ minPrice: value || null, page: null });
+        }}
+        onMaxPriceChange={(value) => {
+          setMaxPrice(value);
+          updateURL({ maxPrice: value || null, page: null });
+        }}
+        onSortChange={(value) => {
+          setSort(value);
+          updateURL({ sort: value === "default" ? null : value, page: null });
+        }}
+        onSelectedAttrsChange={(attrs) => {
+          setSelectedAttrs(attrs);
+          updateAttrsURL(attrs);
+        }}
+        onResetFilters={handleResetFilters}
+      />
+    </>
   );
 }

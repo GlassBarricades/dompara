@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase-client";
+import { cartSubmitSchema, formatError } from "@/lib/validations";
+import { logError } from "@/lib/error-handler";
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -8,32 +10,21 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const items = Array.isArray(body.items) ? body.items : [];
-    const { customer } = body as {
-      customer?: {
-        name?: string;
-        phone?: string;
-        email?: string;
-        telegram?: string;
-        comment?: string;
-      };
-    };
-
-    if (!items.length) {
-      return NextResponse.json({ error: "Корзина пуста" }, { status: 400 });
-    }
-
-    if (!customer?.name || !customer?.phone) {
+    // Валидация данных
+    const validationResult = cartSubmitSchema.safeParse(body);
+    if (!validationResult.success) {
+      const errors = validationResult.error.issues.map((e) => e.message).join(", ");
       return NextResponse.json(
-        { error: "Имя и телефон обязательны" },
+        { error: `Ошибка валидации: ${errors}` },
         { status: 400 }
       );
     }
 
-    // считаем итоговую сумму на сервере
+    const { items, customer } = validationResult.data;
+
+    // Считаем итоговую сумму на сервере
     const total = items.reduce(
-      (acc: number, item: any) =>
-        acc + Number(item.price ?? 0) * Number(item.quantity ?? 0),
+      (acc, item) => acc + item.price * item.quantity,
       0
     );
 
@@ -60,19 +51,17 @@ export async function POST(req: Request) {
         orderId = (data as { id: string }).id;
 
         // Логируем создание заявки
-        if (supabase) {
-          await supabase.from("order_logs").insert({
-            order_id: orderId,
-            field_name: null,
-            old_value: null,
-            new_value: JSON.stringify({
-              customer_name: customer.name,
-              phone: customer.phone,
-              items,
-            }),
-            comment: "Создана новая заявка",
-          });
-        }
+        await supabase.from("order_logs").insert({
+          order_id: orderId,
+          field_name: null,
+          old_value: null,
+          new_value: JSON.stringify({
+            customer_name: customer.name,
+            phone: customer.phone,
+            items,
+          }),
+          comment: "Создана новая заявка",
+        });
       }
     }
 
@@ -89,7 +78,7 @@ export async function POST(req: Request) {
         for (const item of items) {
           lines.push(
             `• ${item.name} — ${item.price} BYN × ${item.quantity} = ${
-              Number(item.price ?? 0) * Number(item.quantity ?? 0)
+              item.price * item.quantity
             } BYN`
           );
         }
@@ -154,9 +143,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, orderId, total });
   } catch (error) {
-    console.error(error);
+    logError(error, { context: "cart/submit" });
     return NextResponse.json(
-      { error: "Не удалось оформить заявку" },
+      { error: formatError(error) || "Не удалось оформить заявку" },
       { status: 500 }
     );
   }

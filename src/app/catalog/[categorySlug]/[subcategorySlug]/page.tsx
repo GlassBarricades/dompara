@@ -10,9 +10,8 @@ import {
 import { CatalogWithSidebar } from "@/components/catalog/catalog-with-sidebar";
 import { Breadcrumbs } from "@/components/catalog/breadcrumbs";
 
-// Делаем страницу подкатегории динамической,
-// чтобы список товаров всегда был свежим.
-export const revalidate = 0;
+// Страница подкатегории ревалидируется каждые 60 секунд
+export const revalidate = 60;
 
 interface SubcategoryPageProps {
   params: {

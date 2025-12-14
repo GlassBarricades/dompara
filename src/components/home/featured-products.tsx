@@ -6,6 +6,8 @@ import { observer } from "mobx-react-lite";
 import { useCartStore } from "@/stores/cart-context";
 import type { Product } from "@/lib/catalog-api";
 import { Button } from "@/components/ui/button";
+import { FavoriteButton } from "@/components/ui/favorite-button";
+import { toast } from "sonner";
 import {
   type CarouselApi,
   Carousel,
@@ -131,9 +133,18 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
                         Нет изображения
                       </div>
                     )}
-                    <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-yellow-500 px-2 py-1 text-[10px] font-semibold text-white whitespace-nowrap">
-                      <span>★</span>
-                      <span>Популярный</span>
+                    <div className="absolute top-2 right-2 flex items-center gap-1">
+                      <FavoriteButton
+                        productId={product.id}
+                        productName={product.name}
+                        variant="ghost"
+                        size="icon-sm"
+                        className="bg-background/80 backdrop-blur-sm"
+                      />
+                      <div className="flex items-center gap-1 rounded-full bg-yellow-500 px-2 py-1 text-[10px] font-semibold text-white whitespace-nowrap">
+                        <span>★</span>
+                        <span>Популярный</span>
+                      </div>
                     </div>
                   </div>
                   <div className="p-4 space-y-2">

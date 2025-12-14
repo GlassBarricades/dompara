@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   getCategoryBySlug,
   getProductsByCategorySlug,
@@ -10,13 +11,49 @@ import {
 import { CatalogWithSidebar } from "@/components/catalog/catalog-with-sidebar";
 import { Breadcrumbs } from "@/components/catalog/breadcrumbs";
 
-// Делаем страницу категории динамической,
-// чтобы список товаров и подкатегорий всегда был актуальным.
-export const revalidate = 0;
+// Страница категории ревалидируется каждые 60 секунд
+export const revalidate = 60;
 
 interface CategoryPageProps {
   params: {
     categorySlug: string;
+  };
+}
+
+export async function generateMetadata({
+  params,
+}: CategoryPageProps): Promise<Metadata> {
+  const category = await getCategoryBySlug(params.categorySlug);
+
+  if (!category) {
+    return {
+      title: "Категория не найдена",
+    };
+  }
+
+  const title = `${category.name} | Каталог товаров для бани`;
+  const description =
+    category.description ||
+    `Каталог товаров категории ${category.name} в интернет-магазине для бани.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: category.image_url
+        ? [
+            {
+              url: category.image_url,
+              width: 1200,
+              height: 630,
+              alt: category.name,
+            },
+          ]
+        : [],
+    },
   };
 }
 

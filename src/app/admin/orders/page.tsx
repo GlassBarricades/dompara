@@ -4,20 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase-client";
 import { Button } from "@/components/ui/button";
+import type { Order, OrderStatus } from "@/types";
 
-type OrderStatus = "new" | "in_progress" | "completed" | "rejected";
-
-interface OrderRow {
-  id: string;
-  customer_name: string;
-  phone: string;
-  email: string | null;
-  telegram: string | null;
-  comment: string | null;
-  items: any;
-  status: OrderStatus;
-  created_at: string;
-}
+type OrderRow = Order;
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   new: "Новая",

@@ -4,21 +4,26 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase-client";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { toast } from "sonner";
+import type { Category } from "@/types";
 
-interface CategoryRow {
+type CategoryRow = Category & {
+  sort_order: number;
   id: string;
   name: string;
   slug: string;
   description: string | null;
-  sort_order: number;
   image_url: string | null;
-}
+};
 
 export default function AdminCategoriesPage() {
   const [items, setItems] = useState<CategoryRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   const canUseSupabase = !!supabase;
 
@@ -47,25 +52,30 @@ export default function AdminCategoriesPage() {
     setLoading(false);
   }
 
-  async function handleDelete(id: string) {
-    if (!canUseSupabase) return;
-    // минимальная защита от случайного удаления
-    if (!window.confirm("Удалить категорию? Это действие нельзя отменить.")) {
-      return;
-    }
+  function handleDeleteClick(id: string) {
+    setItemToDelete(id);
+    setDeleteConfirmOpen(true);
+  }
+
+  async function handleDelete() {
+    if (!canUseSupabase || !itemToDelete) return;
 
     setSaving(true);
     setError(null);
 
     try {
-      const { error } = await supabase!.from("categories").delete().eq("id", id);
+      const { error } = await supabase!.from("categories").delete().eq("id", itemToDelete);
       if (error) throw error;
       await loadCategories();
+      toast.success("Категория успешно удалена");
     } catch (err) {
       console.error(err);
-      setError("Не удалось удалить категорию");
+      const errorMessage = "Не удалось удалить категорию";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
+      setItemToDelete(null);
     }
   }
 
@@ -159,7 +169,7 @@ export default function AdminCategoriesPage() {
                       <Button
                         size="icon-sm"
                         variant="ghost"
-                        onClick={() => handleDelete(row.id)}
+                        onClick={() => handleDeleteClick(row.id)}
                         disabled={saving}
                       >
                         ✕
@@ -172,6 +182,17 @@ export default function AdminCategoriesPage() {
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleDelete}
+        title="Удалить категорию?"
+        description="Это действие нельзя отменить. Все подкатегории и товары в этой категории также могут быть затронуты."
+        confirmText="Удалить"
+        cancelText="Отмена"
+        variant="destructive"
+      />
     </section>
   );
 }

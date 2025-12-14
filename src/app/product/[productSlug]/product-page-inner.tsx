@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import { useCartStore } from "@/stores/cart-context";
+import { useViewHistoryStore } from "@/stores/view-history-context";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
 import { QuickOrderModal } from "@/components/product/quick-order-modal";
@@ -22,8 +23,19 @@ type ProductPageInnerProps = {
 export const ProductPageInner = observer(
   ({ product, attributes, similarProducts = [], reviews = [] }: ProductPageInnerProps) => {
     const cart = useCartStore();
+    const viewHistory = useViewHistoryStore();
     const [justAdded, setJustAdded] = useState(false);
     const [quickOrderOpen, setQuickOrderOpen] = useState(false);
+    
+    // Добавляем товар в историю просмотров
+    useEffect(() => {
+      viewHistory.add({
+        productId: product.id,
+        productSlug: product.slug,
+        productName: product.name,
+        productImage: product.main_image_url,
+      });
+    }, [product.id, product.slug, product.name, product.main_image_url, viewHistory]);
     
     // Симуляция статистики (в реальности это должно приходить с сервера)
     const viewCount = Math.floor(Math.random() * 500) + 50;

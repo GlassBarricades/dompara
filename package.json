@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-slot": "^1.2.4",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.81.1",
     "@tailwindcss/typography": "^0.5.19",
     "@tiptap/extension-placeholder": "^3.11.0",
@@ -24,8 +26,11 @@
     "next": "14.2.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-hook-form": "^7.68.0",
     "recharts": "^3.4.1",
-    "tailwind-merge": "^3.4.0"
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@types/node": "^20",

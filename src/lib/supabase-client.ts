@@ -19,7 +19,7 @@ export const supabase =
           fetch: (url, options = {}) => {
             return fetch(url, {
               ...options,
-              next: { revalidate: 0 }, // Отключаем кэширование для актуальных данных
+              next: { revalidate: 300 }, // Кэшируем на 5 минут
             });
           },
         },

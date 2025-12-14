@@ -1,10 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getCategories } from "@/lib/catalog-api";
 
-// Делаем страницу каталога динамической,
-// чтобы список категорий не кэшировался на билд,
-// а подхватывал изменения из админки сразу.
-export const revalidate = 0;
+// Страница каталога ревалидируется каждые 60 секунд
+// Это позволяет получать актуальные данные без перегрузки сервера
+export const revalidate = 60;
 
 export default async function CatalogPage() {
   const categories = await getCategories();
@@ -39,13 +39,14 @@ export default async function CatalogPage() {
                 href={`/catalog/${category.slug}`}
                 className="flex h-full flex-col rounded-lg border bg-background p-4 transition-all duration-200 hover:bg-accent hover:shadow-md hover:scale-[1.02]"
               >
-                <div className="mb-3 overflow-hidden rounded-md border bg-muted flex h-32 items-center justify-center">
+                <div className="mb-3 overflow-hidden rounded-md border bg-muted flex h-32 items-center justify-center relative">
                   {category.image_url ? (
-                    <img
+                    <Image
                       src={category.image_url}
                       alt={category.name}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   ) : (
                     <span className="text-xs text-muted-foreground">

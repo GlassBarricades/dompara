@@ -1,22 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { observer } from "mobx-react-lite";
 import { useCartStore } from "@/stores/cart-context";
+import { useFavoritesStore } from "@/stores/favorites-context";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/search-input";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
+import { CartDropdown } from "@/components/ui/cart-dropdown";
 
 export const SiteHeader = observer(function SiteHeader() {
   const cart = useCartStore();
+  const favorites = useFavoritesStore();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [mounted, setMounted] = useState(false);
 
-  const cartCount = cart.totalCount;
+  // Предотвращаем ошибку гидратации, показывая правильные значения только после монтирования
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const cartCount = mounted ? cart.totalCount : 0;
+  const favoritesCount = mounted ? favorites.count : 0;
 
   const navLinks = [
     { href: "/catalog", label: "Каталог" },
@@ -73,22 +83,44 @@ export const SiteHeader = observer(function SiteHeader() {
               </Link>
             );
           })}
-          
-          <Link 
-            href="/cart"
+
+          <Link
+            href="/favorites"
             onClick={() => {
               startTransition(() => {});
             }}
+            className={`relative transition-colors duration-200 ${
+              pathname === "/favorites"
+                ? "text-foreground font-medium"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
           >
-            <Button variant="outline" size="icon-sm" className="relative transition-transform hover:scale-105 touch-manipulation min-h-[36px] min-w-[36px]">
+            <button
+              type="button"
+              className="relative inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
+            >
+              {mounted && favoritesCount > 0 ? "❤️" : "🤍"}
+              {mounted && favoritesCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+                  {favoritesCount}
+                </span>
+              )}
+            </button>
+          </Link>
+          
+          <CartDropdown>
+            <button
+              type="button"
+              className="relative inline-flex items-center justify-center rounded-md border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 w-8 transition-transform hover:scale-105 touch-manipulation"
+            >
               🧺
-              {cartCount > 0 && (
+              {mounted && cartCount > 0 && (
                 <span className="absolute -right-2 -top-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground animate-in fade-in zoom-in duration-200">
                   {cartCount}
                 </span>
               )}
-            </Button>
-          </Link>
+            </button>
+          </CartDropdown>
         </nav>
 
         {/* Mobile controls */}
@@ -109,21 +141,19 @@ export const SiteHeader = observer(function SiteHeader() {
               >
                 🔍
               </Button>
-              <Link 
-                href="/cart"
-                onClick={() => {
-                  startTransition(() => {});
-                }}
-              >
-                <Button variant="outline" size="icon-sm" className="relative transition-transform hover:scale-105 touch-manipulation min-h-[36px] min-w-[36px]">
+              <CartDropdown>
+                <button
+                  type="button"
+                  className="relative inline-flex items-center justify-center rounded-md border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 w-8 transition-transform hover:scale-105 touch-manipulation"
+                >
                   🧺
-                  {cartCount > 0 && (
+                  {mounted && cartCount > 0 && (
                     <span className="absolute -right-2 -top-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground animate-in fade-in zoom-in duration-200">
                       {cartCount}
                     </span>
                   )}
-                </Button>
-              </Link>
+                </button>
+              </CartDropdown>
               <Button
                 variant="outline"
                 size="icon-sm"

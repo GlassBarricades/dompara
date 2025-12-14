@@ -245,6 +245,23 @@ export async function getCategoryBySlug(slug: string) {
   return data as Category | null;
 }
 
+export async function getCategoryById(id: string) {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from("categories")
+    .select("id, name, slug, description, image_url, vertical_card_layout")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to load category", error);
+    return null;
+  }
+
+  return data as Category | null;
+}
+
 export async function getSubcategoriesByCategory(categoryId: string) {
   if (!supabase) return [];
 
@@ -269,6 +286,23 @@ export async function getSubcategoryBySlug(slug: string) {
     .from("subcategories")
     .select("id, category_id, name, slug, description, image_url, vertical_card_layout")
     .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to load subcategory", error);
+    return null;
+  }
+
+  return data as Subcategory | null;
+}
+
+export async function getSubcategoryById(id: string) {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from("subcategories")
+    .select("id, category_id, name, slug, description, image_url, vertical_card_layout")
+    .eq("id", id)
     .maybeSingle();
 
   if (error) {
@@ -562,6 +596,25 @@ export async function getFeaturedProducts(): Promise<Product[]> {
 
   if (error) {
     console.error("Failed to load featured products", error);
+    return [];
+  }
+
+  return (data ?? []) as Product[];
+}
+
+export async function getProductsByIds(ids: string[]): Promise<Product[]> {
+  if (!supabase || ids.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      "id, category_id, subcategory_id, name, slug, short_description, price, main_image_url, gallery, is_active, stock_quantity, is_custom_order, is_featured"
+    )
+    .in("id", ids)
+    .eq("is_active", true);
+
+  if (error) {
+    console.error("Failed to load products by IDs", error);
     return [];
   }
 

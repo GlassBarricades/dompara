@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
+import { FavoriteButton } from "@/components/ui/favorite-button";
 
 export interface CatalogProductItem {
   id: string;
@@ -162,27 +164,37 @@ export function ProductGridWithFilters({
               href={`/product/${product.slug}`}
               className="relative flex flex-col rounded-lg border bg-background p-4 transition-colors hover:bg-accent"
             >
-              {/* Бейджи */}
-              <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
-                {product.is_featured && (
-                  <span className="inline-flex items-center rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white dark:bg-amber-600 dark:text-white">
-                    ⭐ Популярный
-                  </span>
-                )}
-                {product.is_custom_order && (
-                  <span className="inline-flex items-center rounded-full bg-purple-500 px-2 py-0.5 text-xs font-medium text-white dark:bg-purple-600 dark:text-white">
-                    📦 Под заказ
-                  </span>
-                )}
+              {/* Бейджи и избранное */}
+              <div className="absolute top-2 right-2 z-10 flex items-start gap-1">
+                <FavoriteButton
+                  productId={product.id}
+                  productName={product.name}
+                  variant="ghost"
+                  size="icon-sm"
+                  className="bg-background/80 backdrop-blur-sm"
+                />
+                <div className="flex flex-col gap-1">
+                  {product.is_featured && (
+                    <span className="inline-flex items-center rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white dark:bg-amber-600 dark:text-white">
+                      ⭐ Популярный
+                    </span>
+                  )}
+                  {product.is_custom_order && (
+                    <span className="inline-flex items-center rounded-full bg-purple-500 px-2 py-0.5 text-xs font-medium text-white dark:bg-purple-600 dark:text-white">
+                      📦 Под заказ
+                    </span>
+                  )}
+                </div>
               </div>
 
-              <div className="mb-3 flex h-56 items-center justify-center overflow-hidden rounded-md border bg-muted">
+              <div className="mb-3 flex h-56 items-center justify-center overflow-hidden rounded-md border bg-muted relative">
                 {product.main_image_url ? (
-                  <img
+                  <Image
                     src={product.main_image_url}
                     alt={product.name}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                 ) : (
                   <span className="text-xs text-muted-foreground">
@@ -220,13 +232,9 @@ export function ProductGridWithFilters({
                   <span>
                     {Number(product.price ?? 0).toLocaleString("ru-RU")} BYN
                   </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-primary text-xs text-primary"
-                  >
+                  <span className="inline-flex items-center rounded-md border border-primary bg-background px-3 py-1.5 text-xs font-medium text-primary">
                     Подробнее
-                  </Button>
+                  </span>
                 </div>
               </div>
             </Link>

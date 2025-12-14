@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cart-context";
+import { toast } from "sonner";
 import type { Product, ProductAttributeDisplay } from "@/lib/catalog-api";
 
 // Компонент вкладок со скроллом для контента

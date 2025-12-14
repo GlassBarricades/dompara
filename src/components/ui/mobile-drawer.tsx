@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { observer } from "mobx-react-lite";
 import { useCartStore } from "@/stores/cart-context";
+import { useFavoritesStore } from "@/stores/favorites-context";
 import { Button } from "@/components/ui/button";
 
 interface MobileDrawerProps {
@@ -21,7 +22,16 @@ export const MobileDrawer = observer(function MobileDrawer({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const cart = useCartStore();
-  const cartCount = cart.totalCount;
+  const favorites = useFavoritesStore();
+  const [mounted, setMounted] = useState(false);
+
+  // Предотвращаем ошибку гидратации, показывая правильные значения только после монтирования
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const cartCount = mounted ? cart.totalCount : 0;
+  const favoritesCount = mounted ? favorites.count : 0;
 
   const navLinks = [
     { href: "/catalog", label: "Каталог" },
@@ -59,11 +69,11 @@ export const MobileDrawer = observer(function MobileDrawer({
       />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-background shadow-xl animate-in slide-in-from-left duration-300">
-        <div className="flex h-full flex-col">
+      <div className="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-white shadow-xl animate-in slide-in-from-left duration-300">
+        <div className="flex h-full flex-col bg-white">
           {/* Header */}
-          <div className="flex items-center justify-between border-b px-4 py-4">
-            <h2 className="font-semibold">Меню</h2>
+          <div className="flex items-center justify-between border-b px-4 py-4 bg-white">
+            <h2 className="font-semibold text-foreground">Меню</h2>
             <Button
               variant="ghost"
               size="icon-sm"
@@ -75,8 +85,8 @@ export const MobileDrawer = observer(function MobileDrawer({
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto">
-            <nav className="flex flex-col p-4 space-y-2">
+          <div className="flex-1 bg-white">
+            <nav className="flex flex-col p-4 space-y-1">
               {navLinks.map((link, index) => {
                 const isActive =
                   pathname === link.href ||
@@ -86,7 +96,7 @@ export const MobileDrawer = observer(function MobileDrawer({
                     key={link.href}
                     type="button"
                     onClick={() => handleLinkClick(link.href)}
-                    className={`text-left px-4 py-3 rounded-md transition-colors touch-manipulation min-h-[44px] ${
+                    className={`text-left px-4 py-3 rounded-md transition-colors duration-200 touch-manipulation min-h-[44px] animate-in fade-in slide-in-from-left ${
                       isActive
                         ? "bg-accent text-foreground font-medium"
                         : "text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -103,22 +113,55 @@ export const MobileDrawer = observer(function MobileDrawer({
           </div>
 
           {/* Footer */}
-          <div className="border-t p-4 space-y-2">
+          <div className="border-t p-4 space-y-2 bg-white">
+            <Link
+              href="/favorites"
+              onClick={() => {
+                onClose();
+                startTransition(() => {
+                  router.push("/favorites");
+                });
+              }}
+              className={`block ${pathname === "/favorites" ? "opacity-100" : ""}`}
+            >
+              <Button
+                variant="outline"
+                className={`w-full justify-start touch-manipulation min-h-[44px] ${
+                  pathname === "/favorites"
+                    ? "bg-accent text-accent-foreground"
+                    : ""
+                }`}
+              >
+                <span className="mr-2">{mounted && favoritesCount > 0 ? "❤️" : "🤍"}</span>
+                Избранное
+                {mounted && favoritesCount > 0 && (
+                  <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">
+                    {favoritesCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
             <Link
               href="/cart"
               onClick={() => {
                 onClose();
-                startTransition(() => {});
+                startTransition(() => {
+                  router.push("/cart");
+                });
               }}
-              className="block"
+              className={`block ${pathname === "/cart" ? "opacity-100" : ""}`}
             >
               <Button
                 variant="outline"
-                className="w-full justify-start touch-manipulation min-h-[44px]"
+                className={`w-full justify-start touch-manipulation min-h-[44px] ${
+                  pathname === "/cart"
+                    ? "bg-accent text-accent-foreground"
+                    : ""
+                }`}
               >
                 <span className="mr-2">🧺</span>
                 Корзина
-                {cartCount > 0 && (
+                {mounted && cartCount > 0 && (
                   <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">
                     {cartCount}
                   </span>

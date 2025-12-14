@@ -3,6 +3,7 @@ import { HeroSlider } from "@/components/home/hero-slider";
 import { CategorySlider } from "@/components/home/category-slider";
 import { ReviewsSlider } from "@/components/home/reviews-slider";
 import { FeaturedProducts } from "@/components/home/featured-products";
+import { ViewHistory } from "@/components/home/view-history";
 import { WhyChooseUs } from "@/components/home/why-choose-us";
 import { FAQSection } from "@/components/home/faq-section";
 import { getHomepageBanners } from "@/lib/homepage-banners-api";
@@ -29,6 +30,9 @@ export default async function Home() {
 
       {/* Популярные товары */}
       <FeaturedProducts products={featuredProducts} />
+
+      {/* История просмотров */}
+      <ViewHistory />
 
       {/* Отзывы клиентов */}
       <ReviewsSlider reviews={reviews} />

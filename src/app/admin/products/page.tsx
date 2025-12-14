@@ -21,21 +21,23 @@ interface SubcategoryOption {
   slug: string;
 }
 
-interface ProductRow {
-  id: string;
+import type { Product } from "@/types";
+
+type ProductRow = Product & {
+  price: number | string | null;
+  is_active: boolean;
+  is_featured: boolean;
+  is_custom_order: boolean;
+  stock_quantity: number | null;
   category_id: string;
   subcategory_id: string | null;
   name: string;
   slug: string;
   short_description: string | null;
-  price: number | string | null;
-  is_active: boolean;
-  is_featured?: boolean;
-  is_custom_order?: boolean;
-  main_image_url?: string | null;
-  gallery?: string[] | null;
-  stock_quantity?: number | null;
-}
+  main_image_url: string | null;
+  gallery: string[] | null;
+  id: string;
+};
 
 export default function AdminProductsPage() {
   const router = useRouter();

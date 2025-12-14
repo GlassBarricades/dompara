@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { searchProducts } from "@/lib/catalog-api";
+import { useSearchHistory } from "@/hooks/use-search-history";
 import type { Product } from "@/lib/catalog-api";
 
 interface SearchInputProps {
@@ -18,11 +19,27 @@ export function SearchInput({ onClose }: SearchInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { history, addToHistory, clearHistory } = useSearchHistory();
 
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
+  }, []);
+
+  // Горячие клавиши Ctrl+K / Cmd+K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   useEffect(() => {
@@ -73,13 +90,24 @@ export function SearchInput({ onClose }: SearchInputProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim().length >= 2 && results.length > 0) {
-      handleProductClick(results[0]);
-    } else if (query.trim().length >= 2) {
-      router.push(`/catalog?search=${encodeURIComponent(query.trim())}`);
-      setShowResults(false);
-      setQuery("");
-      if (onClose) onClose();
+    const trimmed = query.trim();
+    if (trimmed.length >= 2) {
+      addToHistory(trimmed);
+      if (results.length > 0) {
+        handleProductClick(results[0]);
+      } else {
+        router.push(`/catalog?search=${encodeURIComponent(trimmed)}`);
+        setShowResults(false);
+        setQuery("");
+        if (onClose) onClose();
+      }
+    }
+  };
+
+  const handleHistoryClick = (historyItem: string) => {
+    setQuery(historyItem);
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
   };
 
@@ -92,7 +120,7 @@ export function SearchInput({ onClose }: SearchInputProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Поиск товаров..."
+            placeholder="Поиск товаров... (Ctrl+K)"
             className="w-full rounded-md border bg-background px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <div className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -101,13 +129,13 @@ export function SearchInput({ onClose }: SearchInputProps) {
         </div>
       </form>
 
-      {showResults && (query.trim().length >= 2 || results.length > 0) && (
+      {showResults && (
         <div className="absolute z-50 mt-1 w-full rounded-md border bg-background shadow-lg max-h-96 overflow-y-auto">
           {isSearching ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               Поиск...
             </div>
-          ) : results.length > 0 ? (
+          ) : query.trim().length >= 2 && results.length > 0 ? (
             <div className="py-2">
               {results.map((product) => (
                 <button
@@ -149,11 +177,36 @@ export function SearchInput({ onClose }: SearchInputProps) {
                 </Link>
               )}
             </div>
-          ) : (
+          ) : query.trim().length >= 2 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               Товары не найдены
             </div>
-          )}
+          ) : history.length > 0 ? (
+            <div className="py-2">
+              <div className="flex items-center justify-between px-4 py-2 border-b">
+                <span className="text-xs font-medium text-muted-foreground">
+                  История поиска
+                </span>
+                <button
+                  type="button"
+                  onClick={clearHistory}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Очистить
+                </button>
+              </div>
+              {history.map((item, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleHistoryClick(item)}
+                  className="w-full text-left px-4 py-2 hover:bg-accent transition-colors text-sm"
+                >
+                  🔍 {item}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
       )}
     </div>

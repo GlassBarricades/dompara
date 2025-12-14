@@ -1,9 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase-client-browser";
 
 export const dynamic = 'force-dynamic';
 
@@ -29,13 +31,77 @@ const adminLinks = [
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  // Исключаем страницу логина из layout
+  const isLoginPage = pathname === "/admin/login";
+
+  useEffect(() => {
+    // Для страницы логина не проверяем авторизацию
+    if (isLoginPage) {
+      setLoading(false);
+      return;
+    }
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth, isLoginPage]);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push("/admin/login");
+    router.refresh();
+  }
+
+  // Для страницы логина рендерим без layout
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-sm text-muted-foreground">Загрузка...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Middleware перенаправит на /admin/login
+  }
 
   return (
     <div className="flex min-h-screen">
       {/* Боковое меню для десктопа */}
       <aside className="hidden w-64 border-r bg-muted/40 p-4 md:block">
-        <div className="mb-6 font-semibold">Админка</div>
+        <div className="mb-6 space-y-2">
+          <div className="font-semibold">Админка</div>
+          <div className="text-xs text-muted-foreground">
+            {user.email}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSignOut}
+            className="w-full justify-start text-xs"
+          >
+            Выйти
+          </Button>
+        </div>
         <nav className="space-y-1 text-sm">
           {adminLinks.map((link) => {
             const active = pathname?.startsWith(link.href);
@@ -72,6 +138,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
           {mobileOpen && (
             <nav className="mt-3 space-y-1 text-sm">
+              <div className="mb-2 px-2 py-1 text-xs text-muted-foreground">
+                {user.email}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="w-full justify-start text-xs mb-2"
+              >
+                Выйти
+              </Button>
               {adminLinks.map((link) => {
                 const active = pathname?.startsWith(link.href);
                 return (
