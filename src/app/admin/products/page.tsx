@@ -260,7 +260,9 @@ export default function AdminProductsPage() {
                                         {row.subcategory_id && <> / {getSubcategoryName(row.subcategory_id)}</>}
                                     </td>
                                     <td className="px-3 py-3 text-xs text-muted-foreground">/product/{row.slug}</td>
-                                    <td className="px-3 py-3 text-sm">{formatPrice(row.price)} BYN</td>
+                                    <td className="px-3 py-3 text-sm">
+                                        {row.is_custom_order === true ? ' от' : ''} {formatPrice(row.price)} BYN
+                                    </td>
                                     <td className="px-3 py-3 text-sm">
                                         {row.is_custom_order ? (
                                             <span className="text-muted-foreground">—</span>

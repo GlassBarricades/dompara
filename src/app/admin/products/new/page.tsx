@@ -466,7 +466,7 @@ export default function NewProductPage() {
 
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-1">
-                                <label className="text-sm font-medium">Цена (BYN)</label>
+                                <label className="text-sm font-medium">{form.is_custom_order === true ? 'Цена от (BYN)' : 'Цена (BYN)'}</label>
                                 <input
                                     type="number"
                                     step="0.01"
