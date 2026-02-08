@@ -261,7 +261,8 @@ export default function AdminProductsPage() {
                                     </td>
                                     <td className="px-3 py-3 text-xs text-muted-foreground">/product/{row.slug}</td>
                                     <td className="px-3 py-3 text-sm">
-                                        {row.is_custom_order === true ? ' от' : ''} {formatPrice(row.price)} BYN
+                                        {row.is_custom_order === true || row.category_id === 'bcb746f9-6815-4ff6-92b6-9d1c5cefad9b' ? ' от' : ''} {formatPrice(row.price)}{' '}
+                                        BYN
                                     </td>
                                     <td className="px-3 py-3 text-sm">
                                         {row.is_custom_order ? (

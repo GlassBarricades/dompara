@@ -21,6 +21,7 @@ export interface CatalogProductItem {
     stock_quantity?: number | null
     is_custom_order?: boolean
     is_featured?: boolean
+    category_id: string
 }
 
 type SortKey = 'default' | 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc'
@@ -880,7 +881,8 @@ export function CatalogWithSidebar({
                                                     className={`flex flex-wrap items-center justify-between text-sm font-semibold ${viewMode === 'list' ? 'gap-4' : 'flex-col gap-2'}`}
                                                 >
                                                     <span className={viewMode === 'list' ? 'text-lg' : ''}>
-                                                        {product.is_custom_order === true ? ' от' : ''} {Number(product.price ?? 0).toLocaleString('ru-RU')} BYN
+                                                        {product.is_custom_order === true || product.category_id === 'bcb746f9-6815-4ff6-92b6-9d1c5cefad9b' ? ' от' : ''}{' '}
+                                                        {Number(product.price ?? 0).toLocaleString('ru-RU')} BYN
                                                     </span>
                                                     <div className="flex flex-wrap items-center gap-2 w-full">
                                                         <Button

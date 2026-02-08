@@ -297,7 +297,8 @@ export function QuickViewModal({ productSlug, isOpen, onClose }: QuickViewModalP
                             <div className="space-y-2 border-t pt-4 flex-shrink-0">
                                 <div className="flex items-baseline gap-2">
                                     <span className="text-3xl font-bold">
-                                        {product.is_custom_order === true ? ' от' : ''} {Number(product.price).toLocaleString('ru-RU')} BYN
+                                        {product.is_custom_order === true || product.category_id === 'bcb746f9-6815-4ff6-92b6-9d1c5cefad9b' ? ' от' : ''}{' '}
+                                        {Number(product.price).toLocaleString('ru-RU')} BYN
                                     </span>
                                 </div>
                                 {!product.is_custom_order && product.stock_quantity !== null && product.stock_quantity !== undefined && (

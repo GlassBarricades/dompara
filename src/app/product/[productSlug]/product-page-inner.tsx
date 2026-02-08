@@ -194,7 +194,8 @@ export const ProductPageInner = observer(({ product, attributes, similarProducts
                         <div className="space-y-1">
                             <div className="text-xs uppercase text-muted-foreground">Цена</div>
                             <div className="text-2xl font-semibold">
-                                {product.is_custom_order === true ? ' от' : ''} {product.price.toLocaleString('ru-RU')} BYN
+                                {product.is_custom_order === true || product.category_id === 'bcb746f9-6815-4ff6-92b6-9d1c5cefad9b' ? ' от' : ''}{' '}
+                                {product.price.toLocaleString('ru-RU')} BYN
                             </div>
                         </div>
 

@@ -10,6 +10,8 @@ interface SimilarProductsProps {
 export function SimilarProducts({ products, currentProductId }: SimilarProductsProps) {
     if (products.length === 0) return null
 
+    console.log(products)
+
     return (
         <section className="space-y-4 pt-8 border-t">
             <h2 className="text-xl font-semibold">Похожие товары</h2>
@@ -39,7 +41,8 @@ export function SimilarProducts({ products, currentProductId }: SimilarProductsP
                             </div>
                             <div className="mt-3 flex items-center justify-between text-sm font-semibold">
                                 <span>
-                                    {product.is_custom_order === true ? ' от' : ''} {product.price.toLocaleString('ru-RU')} BYN
+                                    {product.is_custom_order === true || product.category_id === 'bcb746f9-6815-4ff6-92b6-9d1c5cefad9b' ? ' от' : ''}{' '}
+                                    {product.price.toLocaleString('ru-RU')} BYN
                                 </span>
                                 <Button variant="outline" size="sm" className="border-primary text-xs text-primary" onClick={(e) => e.preventDefault()}>
                                     Подробнее
