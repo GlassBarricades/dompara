@@ -236,6 +236,9 @@ export const ProductPageInner = observer(({ product, attributes, similarProducts
                         <div className="space-y-1 text-xs text-muted-foreground">
                             <div>Оплата и доставка согласовываются с менеджером после заявки.</div>
                             <div>При необходимости поможем подобрать аналог или комплект.</div>
+                            <div className="mt-2 border-t pt-2">
+                                Внимание! Изображения, цвет, характеристики и комплектация товаров, указанные на сайте, могут отличаться от реальных.
+                            </div>
                         </div>
                     </div>
                 </aside>
