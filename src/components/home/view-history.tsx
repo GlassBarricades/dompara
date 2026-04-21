@@ -3,11 +3,22 @@
 import { observer } from "mobx-react-lite";
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { useViewHistoryStore } from "@/stores/view-history-context";
 import { Button } from "@/components/ui/button";
 
 export const ViewHistory = observer(function ViewHistory() {
   const viewHistory = useViewHistoryStore();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
+
   const recentItems = viewHistory.recentItems;
 
   if (recentItems.length === 0) {

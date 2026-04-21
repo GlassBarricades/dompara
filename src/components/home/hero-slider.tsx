@@ -179,7 +179,7 @@ export function HeroSlider({
 
           {safeBanners.length > 1 && (
             <div className="flex items-center justify-between px-4 py-3 sm:px-6">
-              <div className="flex gap-2">
+              <div className="flex gap-1 sm:gap-2">
                 {safeBanners.map((banner, i) => {
                   const isActive = i === current;
                   return (
@@ -187,10 +187,10 @@ export function HeroSlider({
                       key={banner.id}
                       type="button"
                       onClick={() => carouselApi?.scrollTo(i)}
-                      className={`h-2.5 rounded-full transition-all ${
+                      className={`min-h-0 min-w-0 h-1 sm:h-2.5 rounded-full transition-all ${
                         isActive
-                          ? "w-6 bg-primary"
-                          : "w-2.5 bg-muted-foreground/40 hover:bg-muted-foreground/70"
+                          ? "w-2.5 sm:w-6 bg-primary"
+                          : "w-1 sm:w-2.5 bg-muted-foreground/40 hover:bg-muted-foreground/70"
                       }`}
                       aria-label={`Перейти к баннеру ${i + 1}`}
                     />

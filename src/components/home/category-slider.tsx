@@ -142,11 +142,11 @@ export function CategorySlider({ categories }: CategorySliderProps) {
           </CarouselContent>
 
           {safeCategories.length > 1 && (
-            <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground sm:text-xs">
-              <div className="flex items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground sm:text-xs">
+              <div className="flex min-w-0 items-center gap-2">
                 <CarouselPrevious className="h-7 w-7 border bg-background text-xs text-muted-foreground hover:bg-background" />
 
-                <div className="flex gap-1">
+                <div className="flex min-w-0 flex-1 gap-0.5 sm:gap-1 overflow-x-auto overscroll-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   {Array.from({ length: totalPages }).map((_, i) => (
                     <button
                       key={i}
@@ -156,7 +156,7 @@ export function CategorySlider({ categories }: CategorySliderProps) {
                           i * Math.max(1, slidesPerView),
                         )
                       }
-                      className={`h-1.5 w-4 rounded-full ${
+                      className={`min-h-0 min-w-0 h-0.5 w-2 sm:h-1.5 sm:w-4 rounded-full ${
                         currentPage === i + 1
                           ? "bg-primary"
                           : "bg-muted-foreground/40"
@@ -169,7 +169,7 @@ export function CategorySlider({ categories }: CategorySliderProps) {
                 <CarouselNext className="h-7 w-7 border bg-background text-xs text-muted-foreground hover:bg-background" />
               </div>
 
-              <span>
+              <span className="ml-auto">
                 {currentPage} из {totalPages}
               </span>
             </div>

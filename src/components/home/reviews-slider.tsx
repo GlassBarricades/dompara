@@ -119,10 +119,10 @@ export function ReviewsSlider({ reviews }: ReviewsSliderProps) {
           </CarouselContent>
 
           {safeReviews.length > 1 && (
-            <div className="mt-6 flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2">
                 <CarouselPrevious className="h-8 w-8 border bg-background" />
-                <div className="flex gap-1">
+                <div className="flex min-w-0 flex-1 gap-0.5 sm:gap-1 overflow-x-auto overscroll-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   {safeReviews.map((_, i) => {
                     const isActive = i === current;
                     return (
@@ -130,10 +130,10 @@ export function ReviewsSlider({ reviews }: ReviewsSliderProps) {
                         key={i}
                         type="button"
                         onClick={() => carouselApi?.scrollTo(i)}
-                        className={`h-2 rounded-full transition-all ${
+                        className={`min-h-0 min-w-0 h-1 sm:h-2 rounded-full transition-all ${
                           isActive
-                            ? "w-6 bg-primary"
-                            : "w-2 bg-muted-foreground/40 hover:bg-muted-foreground/70"
+                            ? "w-2.5 sm:w-6 bg-primary"
+                            : "w-1 sm:w-2 bg-muted-foreground/40 hover:bg-muted-foreground/70"
                         }`}
                         aria-label={`Перейти к отзыву ${i + 1}`}
                       />
@@ -142,7 +142,7 @@ export function ReviewsSlider({ reviews }: ReviewsSliderProps) {
                 </div>
                 <CarouselNext className="h-8 w-8 border bg-background" />
               </div>
-              <span className="text-xs text-muted-foreground">
+              <span className="ml-auto text-xs text-muted-foreground">
                 {current + 1} из {count}
               </span>
             </div>

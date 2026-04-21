@@ -32,7 +32,9 @@ function TabsWithScroll({ defaultTab, tabs }: { defaultTab?: string; tabs: { id:
                     ))}
                 </nav>
             </div>
-            <div className="flex-1 overflow-y-auto min-h-0 pt-4 animate-in fade-in duration-200">{activeContent}</div>
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain [webkit-overflow-scrolling:touch] pt-4 animate-in fade-in duration-200">
+                {activeContent}
+            </div>
         </div>
     )
 }
@@ -222,8 +224,11 @@ export function QuickViewModal({ productSlug, isOpen, onClose }: QuickViewModalP
         : []
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200" onClick={onClose}>
-            <div className="w-full max-w-5xl h-[90vh] flex flex-col rounded-lg border bg-background animate-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 md:items-center md:p-4 animate-in fade-in duration-200" onClick={onClose}>
+            <div
+                className="w-full md:max-w-5xl h-[100dvh] max-h-[100dvh] md:h-[90vh] md:max-h-[90vh] flex flex-col rounded-t-lg border bg-background md:rounded-lg animate-in zoom-in duration-200"
+                onClick={(e) => e.stopPropagation()}
+            >
                 {loading ? (
                     <div className="p-12 text-center">
                         <div className="text-muted-foreground">Загрузка...</div>
@@ -236,10 +241,10 @@ export function QuickViewModal({ productSlug, isOpen, onClose }: QuickViewModalP
                         </Button>
                     </div>
                 ) : product ? (
-                    <div className="grid gap-6 md:grid-cols-[1fr,1fr] flex-1 overflow-hidden p-6">
+                    <div className="grid flex-1 min-h-0 gap-4 p-4 md:grid-cols-[1fr,1fr] md:gap-6 md:p-6 overflow-hidden">
                         {/* Левая колонка: Галерея */}
                         <div className="space-y-4 flex flex-col">
-                            <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
+                            <div className="relative aspect-[4/3] md:aspect-square overflow-hidden rounded-lg border bg-muted">
                                 {images.length > 0 ? (
                                     <img src={images[activeImageIndex]} alt={product.name} className="h-full w-full object-contain" loading="lazy" />
                                 ) : (
@@ -280,7 +285,7 @@ export function QuickViewModal({ productSlug, isOpen, onClose }: QuickViewModalP
                         </div>
 
                         {/* Правая колонка: Информация */}
-                        <div className="flex flex-col space-y-4 min-w-0">
+                        <div className="flex flex-col space-y-4 min-w-0 min-h-0">
                             {/* Заголовок и кнопка закрытия */}
                             <div className="flex items-start justify-between gap-4 flex-shrink-0">
                                 <h2 className="text-2xl font-semibold flex-1">{product.name}</h2>

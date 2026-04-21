@@ -36,9 +36,9 @@ export const ProductPageInner = observer(({ product, attributes, similarProducts
         })
     }, [product.id, product.slug, product.name, product.main_image_url, viewHistory])
 
-    // Симуляция статистики (в реальности это должно приходить с сервера)
-    const viewCount = Math.floor(Math.random() * 500) + 50
-    const purchaseCount = Math.floor(Math.random() * 100) + 5
+    // Детерминированная псевдостатистика, чтобы SSR/CSR рендер совпадали.
+    const viewCount = getStableMetricFromId(product.id, 50, 549)
+    const purchaseCount = getStableMetricFromId(`${product.id}:purchases`, 5, 104)
 
     const images = [product.main_image_url, ...(Array.isArray(product.gallery) ? product.gallery : [])].filter((src): src is string => !!src)
 
@@ -286,4 +286,14 @@ function formatAttributeValue(attr: ProductAttributeDisplay): string | null {
         default:
             return null
     }
+}
+
+function getStableMetricFromId(source: string, min: number, max: number): number {
+    if (max < min) return min
+    let hash = 0
+    for (let i = 0; i < source.length; i += 1) {
+        hash = (hash * 31 + source.charCodeAt(i)) >>> 0
+    }
+    const range = max - min + 1
+    return min + (hash % range)
 }
