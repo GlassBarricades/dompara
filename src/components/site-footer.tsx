@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { getContactSettings } from "@/lib/settings-api";
 
-export function SiteFooter() {
+export async function SiteFooter() {
   const year = new Date().getFullYear();
+  const settings = await getContactSettings();
+  const phone = settings?.phone ?? "+375 (___) ___-__-__";
 
   const footerLinks = {
     catalog: [
@@ -109,7 +112,7 @@ export function SiteFooter() {
         <div className="mt-8 border-t pt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
           <div>© {year} Всё для бани. Все права защищены.</div>
           <div className="flex flex-wrap gap-2">
-            <span>Телефон: +375 (___) ___-__-__</span>
+            <span>Телефон: {phone}</span>
             <span className="hidden sm:inline">·</span>
             <span>Режим работы: ежедневно</span>
           </div>
